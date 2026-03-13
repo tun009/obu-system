@@ -1,0 +1,27 @@
+version: '3.8'
+
+services:
+  # Database PostgreSQL với phần mở rộng PostGIS (Cho Bản đồ đo chiều dài)
+  postgres:
+    image: postgis/postgis:15-3.4
+    container_name: obu-postgres
+    restart: always
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: password123
+      POSTGRES_DB: obu_database
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  # Database Redis dùng làm kênh Pub/Sub thời gian thực cho WebSocket
+  redis:
+    image: redis:alpine
+    container_name: obu-redis
+    restart: always
+    ports:
+      - "6379:6379"
+
+volumes:
+  pgdata:

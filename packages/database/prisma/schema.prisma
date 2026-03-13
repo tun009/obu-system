@@ -1,0 +1,68 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+}
+
+enum VehicleStatus {
+  ONLINE
+  OFFLINE
+  STOPPED
+  PARKED
+  LOST_SIGNAL
+}
+
+model Vehicle {
+  id             Int           @id @default(autoincrement())
+  imei           String        @unique // Mã MQTT Topic
+  licensePlate   String?       @map("license_plate")
+  type           String?
+  
+  currentStatus  VehicleStatus @default(OFFLINE) @map("current_status")
+  
+  // Lưu tọa độ GPS dưới định dạng hệ toạ độ WGS-84 (SRID 4326)
+  currentLocation Unsupported("geometry(Point, 4326)")? @map("current_location")
+  
+  engineRpm      Int?          @map("engine_rpm")
+  speedKmh       Float?        @map("speed_kmh")
+  fuelLevel      Float?        @map("fuel_level")
+  coolantTemp    Float?        @map("coolant_temp")
+  throttle       Float?        @map("throttle")
+  direction      Float?        @map("direction")
+  
+  lastUpdatedAt  DateTime      @default(now()) @updatedAt @map("last_updated_at")
+
+  journeyLogs    JourneyLog[]
+
+  @@map("vehicles")
+}
+
+model JourneyLog {
+  // Dùng BigInt vì bảng này có thể lên tới tỷ bản ghi
+  id            BigInt        @id @default(autoincrement())
+  timestamp     DateTime      @default(now())
+  
+  vehicleId     Int           @map("vehicle_id")
+  vehicle       Vehicle       @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  
+  // Lưu tọa độ điểm cho mỗi log
+  location      Unsupported("geometry(Point, 4326)")?
+  
+  speed         Float?
+  rpm           Int?
+  fuelLevel     Float?        @map("fuel_level")
+  coolantTemp   Float?        @map("coolant_temp")
+  throttle      Float?        @map("throttle")
+  direction     Float?        @map("direction")
+  engineStatus  Boolean?      @map("engine_status")
+
+  @@index([timestamp])
+  @@index([vehicleId, timestamp]) // Index tối ưu cho việc quét lại hành trình 1 xe
+  @@map("journey_logs")
+}
