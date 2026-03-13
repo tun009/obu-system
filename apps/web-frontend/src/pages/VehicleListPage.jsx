@@ -91,8 +91,8 @@ export default function VehicleListPage() {
                 <div className="flex-1 overflow-y-auto">
                     {currentItems.map((v, index) => (
                         <div key={v.imei || index} className="grid grid-cols-6 gap-4 px-6 py-3.5 border-b border-gray-100 hover:bg-blue-50/40 transition-colors items-center text-sm group">
-                            <div className="font-bold text-gray-800 tracking-tight">{v.licensePlate || 'Chưa ĐK'}</div>
-                            <div className="text-gray-500">{v.type || 'Chưa ĐK'}</div>
+                            <div className="font-bold text-gray-800 tracking-tight">{v.licensePlate || ''}</div>
+                            <div className="text-gray-500">{v.type || ''}</div>
                             <div className="text-gray-500 font-mono text-xs bg-gray-50 border border-gray-100 px-2 py-1 rounded inline-flex w-fit">{v.imei}</div>
                             <div className="flex justify-center">
                                 <Badge status={v.status} className="w-28 justify-center shadow-sm" />

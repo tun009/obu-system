@@ -6,6 +6,7 @@ const statusMap = {
   STOPPED: "Dừng xe",
   PARKED: "Đỗ xe",
   LOST_SIGNAL: "Mất tín hiệu",
+  OFFLINE: "Mất tín hiệu",
   ONLINE: "Trực tuyến"
 };
 
@@ -15,6 +16,7 @@ const variantMap = {
   STOPPED: "text-[#f59e0b] border-[#f59e0b] bg-[#f59e0b]/10",
   PARKED: "text-[#64748b] border-[#64748b] bg-[#64748b]/10",
   LOST_SIGNAL: "text-[#ef4444] border-[#ef4444] bg-[#ef4444]/10",
+  OFFLINE: "text-[#ef4444] border-[#ef4444] bg-[#ef4444]/10",
   ONLINE: "text-[#3b82f6] border-[#3b82f6] bg-[#3b82f6]/10"
 };
 

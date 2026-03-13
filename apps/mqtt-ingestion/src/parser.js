@@ -17,7 +17,11 @@ function parseObuMessage(messageString) {
     }
 }
 
-function determineVehicleStatus(rpm, speed) {
+function determineVehicleStatus(rpm, speed, carResponse) {
+    if (String(carResponse) === '0') {
+        return 'PARKED';
+    }
+
     const currentRpm = parseFloat(rpm) || 0;
     let currentSpeed = parseFloat(speed) || 0;
 

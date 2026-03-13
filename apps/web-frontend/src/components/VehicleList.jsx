@@ -12,12 +12,12 @@ export default function VehicleList({ vehicles, onSelectVehicle, selectedVehicle
         running: vehicles.filter(v => v.status === 'RUNNING').length,
         stopped: vehicles.filter(v => v.status === 'STOPPED').length,
         parked: vehicles.filter(v => v.status === 'PARKED').length,
-        lost: vehicles.filter(v => v.status === 'LOST_SIGNAL').length,
+        lost: vehicles.filter(v => v.status === 'LOST_SIGNAL' || v.status === 'OFFLINE').length,
     };
 
     const filteredVehicles = vehicles
         .filter(v => v.licensePlate?.toLowerCase().includes(searchTerm.toLowerCase()) || v.imei?.includes(searchTerm))
-        .filter(v => filter === 'ALL' ? true : v.status === filter);
+        .filter(v => filter === 'ALL' ? true : (filter === 'LOST_SIGNAL' ? (v.status === 'LOST_SIGNAL' || v.status === 'OFFLINE') : v.status === filter));
 
     return (
         <div className="flex flex-col h-full bg-white border-r border-gray-200">
@@ -96,7 +96,7 @@ export default function VehicleList({ vehicles, onSelectVehicle, selectedVehicle
                     >
                         <div className="grid grid-cols-7 gap-2 items-center">
                             <div className="col-span-2">
-                                <p className="font-bold text-gray-800 text-base line-clamp-1">{v.licensePlate || 'Chưa ĐK'}</p>
+                                <p className="font-bold text-gray-800 text-base line-clamp-1">{v.licensePlate || ''}</p>
                                 <p className="text-[11px] text-gray-400 mt-0.5 line-clamp-1">IMEI: {v.imei}</p>
                             </div>
                             <div className="col-span-2 flex justify-center">

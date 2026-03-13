@@ -72,10 +72,33 @@ router.get('/:imei/history', async (req, res) => {
             WHERE vehicle_id = ${vehicle.id}
               AND "timestamp" >= ${new Date(start)}
               AND "timestamp" <= ${new Date(end)}
+              AND location IS NOT NULL
+              AND (ST_X(location) != 0 AND ST_Y(location) != 0)
             ORDER BY "timestamp" ASC;
         `;
 
-        res.json({ success: true, count: history.length, data: history });
+        // Tính tổng quãng đường bằng PostGIS
+        const totalDistanceQuery = await prisma.$queryRaw`
+            SELECT ST_Length(
+                ST_MakeLine(location::geometry)::geography
+            ) / 1000 as "totalKm"
+            FROM (
+                SELECT location 
+                FROM journey_logs
+                WHERE vehicle_id = ${vehicle.id}
+                  AND "timestamp" >= ${new Date(start)}
+                  AND "timestamp" <= ${new Date(end)}
+                  AND location IS NOT NULL
+                  AND (ST_X(location) != 0 AND ST_Y(location) != 0)
+                ORDER BY "timestamp" ASC
+            ) AS ordered_logs
+        `;
+
+        const totalKm = totalDistanceQuery.length > 0 && totalDistanceQuery[0].totalKm 
+            ? parseFloat(totalDistanceQuery[0].totalKm).toFixed(2) 
+            : 0;
+
+        res.json({ success: true, count: history.length, totalKm: parseFloat(totalKm), data: history });
     } catch (error) {
         console.error(`API /history error for ${imei}:`, error);
         res.status(500).json({ success: false, message: 'Internal Server Error' });
