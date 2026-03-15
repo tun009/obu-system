@@ -21,8 +21,8 @@ function determineVehicleStatus(rpm, speed, carResponse) {
     const currentRpm = parseFloat(rpm) || 0;
     let currentSpeed = parseFloat(speed) || 0;
 
-    // Ưu tiên tuyệt đối: Vận tốc GPS (Ngưỡng 3km/h để chống nhiễu tọa độ trôi dạt tĩnh)
-    const SPEED_THRESHOLD = 3; 
+    // Ưu tiên tuyệt đối: Vận tốc GPS (Ngưỡng 1km/h - thống nhất với frontend)
+    const SPEED_THRESHOLD = 1; 
     
     if (currentSpeed >= SPEED_THRESHOLD) {
         return 'RUNNING';

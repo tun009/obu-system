@@ -3,9 +3,11 @@ import { NavLink } from 'react-router-dom';
 
 export default function TopNav() {
   const tabs = [
-    { id: '/monitor', label: 'Giám sát xe', icon: (
-      <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20"><path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"/></svg>
-    ) },
+    {
+      id: '/monitor', label: 'Giám sát xe', icon: (
+        <svg className="w-6 h-6 mr-2" fill="currentColor" viewBox="0 0 20 20"><path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" /></svg>
+      )
+    },
     { id: '/history', label: 'Nhật trình', icon: null },
     { id: '/list', label: 'Danh sách xe', icon: null },
   ];
@@ -18,9 +20,9 @@ export default function TopNav() {
           <NavLink
             key={tab.id}
             to={tab.id}
-            className={({ isActive }) => `flex items-center px-4 h-full font-medium text-base transition-colors border-b-2
-              ${isActive 
-                ? 'text-[#335ddc] border-[#335ddc]' 
+            className={({ isActive }) => `flex items-center px-4 h-full font-medium text-xl transition-colors border-b-2
+              ${isActive
+                ? 'text-[#335ddc] border-[#335ddc]'
                 : 'text-gray-600 border-transparent hover:text-gray-900 hover:bg-gray-50'
               }
             `}
@@ -38,7 +40,7 @@ export default function TopNav() {
           Support
         </div>
         <div className="flex items-center gap-1 cursor-pointer hover:text-gray-800">
-          English 
+          English
           <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
         </div>
         <div className="flex items-center gap-2 cursor-pointer hover:text-gray-800 ml-2 pl-4 border-l">

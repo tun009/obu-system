@@ -28,13 +28,13 @@ export default function VehicleListPage() {
         setEditingVehicle(vehicle);
         setIsAddModalOpen(true);
     };
-    
+
     // Pagination state
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 10;
 
-    const filteredVehicles = vehicles.filter(v => 
-        v.licensePlate?.toLowerCase().includes(searchTerm.toLowerCase()) || 
+    const filteredVehicles = vehicles.filter(v =>
+        v.licensePlate?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         v.imei?.includes(searchTerm)
     );
 
@@ -49,22 +49,22 @@ export default function VehicleListPage() {
             <div className="bg-white rounded-xl shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] border border-gray-200 flex flex-col h-full overflow-hidden">
                 {/* Header Section */}
                 <div className="p-6 pb-4 border-b border-gray-100 flex flex-col gap-4">
-                    <h2 className="text-xl font-bold text-gray-800 tracking-tight">Danh sách đội xe ({filteredVehicles.length})</h2>
-                    
+                    <h2 className="text-xl font-bold text-gray-800 tracking-tight">Danh sách xe ({filteredVehicles.length})</h2>
+
                     <div className="flex justify-between items-center gap-4">
                         <div className="flex-1 max-w-lg relative">
                             <Search className="w-4 h-4 text-gray-400 absolute left-3 top-3 pointer-events-none" />
-                            <Input 
+                            <Input
                                 value={searchTerm}
-                                onChange={(e) => {setSearchTerm(e.target.value); setCurrentPage(1);}}
-                                placeholder="Tìm kiếm biển số xe, tài xế,..." 
+                                onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
+                                placeholder="Tìm kiếm biển số xe, tài xế,..."
                                 className="pl-9 h-10 w-full bg-white border-gray-200 focus:ring-2 focus:ring-[#284ba5]/20"
                             />
                         </div>
                         <div className="flex items-center gap-2">
-                            <Button variant="outline" className="h-10 w-10 p-0 flex items-center justify-center text-blue-600 border-gray-200 hover:bg-gray-50 hover:text-[#284ba5] transition-colors shadow-none rounded-lg">
+                            {/* <Button variant="outline" className="h-10 w-10 p-0 flex items-center justify-center text-blue-600 border-gray-200 hover:bg-gray-50 hover:text-[#284ba5] transition-colors shadow-none rounded-lg">
                                 <Filter className="w-4 h-4" />
-                            </Button>
+                            </Button> */}
                             <Button variant="outline" className="h-10 text-green-700 border-gray-200 bg-white hover:bg-green-50 font-medium transition-colors shadow-none rounded-lg">
                                 <FileSpreadsheet className="w-4 h-4 mr-2" />
                                 Xuất file
@@ -106,7 +106,7 @@ export default function VehicleListPage() {
                             </div>
                         </div>
                     ))}
-                    
+
                     {currentItems.length === 0 && (
                         <div className="flex flex-col items-center justify-center h-full min-h-[300px] text-gray-400 bg-gray-50/50">
                             <Search className="w-10 h-10 mb-4 opacity-20" />
@@ -118,14 +118,14 @@ export default function VehicleListPage() {
                 {/* Pagination Footer */}
                 <div className="p-4 border-t border-gray-100 flex items-center justify-between text-xs text-gray-500 bg-white">
                     <div className="font-medium">Showing {indexOfFirstItem + 1}-{Math.min(indexOfLastItem, filteredVehicles.length)} out of {filteredVehicles.length} items</div>
-                    
+
                     <div className="flex gap-4 items-center">
                         <div className="flex items-center gap-1 border border-gray-200 rounded px-2 py-1.5 cursor-pointer hover:bg-gray-50 transition-colors bg-white font-medium">
                             <span>10</span>
                             <span className="text-[10px] ml-1">▼</span>
                         </div>
                         <div className="flex gap-1">
-                            <button 
+                            <button
                                 disabled={currentPage === 1}
                                 onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                                 className="px-2 py-1.5 border border-gray-200 rounded bg-white hover:bg-gray-50 disabled:opacity-30 disabled:hover:bg-white transition-all text-gray-600"
@@ -133,8 +133,8 @@ export default function VehicleListPage() {
                             {Array.from({ length: Math.min(totalPages, 5) }).map((_, idx) => {
                                 const pageNumber = idx + 1; // Simplify for now
                                 return (
-                                    <button 
-                                        key={pageNumber} 
+                                    <button
+                                        key={pageNumber}
                                         onClick={() => setCurrentPage(pageNumber)}
                                         className={`min-w-[32px] px-2 py-1.5 border rounded-lg font-medium transition-all ${currentPage === pageNumber ? 'border-[#284ba5] text-white bg-[#284ba5] shadow-sm' : 'border-gray-200 hover:bg-gray-50 text-gray-600 bg-white'}`}
                                     >
@@ -142,16 +142,16 @@ export default function VehicleListPage() {
                                     </button>
                                 );
                             })}
-                            
+
                             {totalPages > 5 && <span className="px-2 py-1.5 text-gray-400 font-medium">...</span>}
-                            
-                            <button 
+
+                            <button
                                 disabled={currentPage === totalPages || totalPages === 0}
                                 onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                                 className="px-2 py-1.5 border border-gray-200 rounded bg-white hover:bg-gray-50 disabled:opacity-30 disabled:hover:bg-white transition-all text-gray-600"
                             >&gt;</button>
                         </div>
-                        
+
                         <div className="flex items-center gap-2 font-medium">
                             <span>Go to page</span>
                             <input type="text" className="w-10 h-7 border border-gray-200 rounded text-center focus:ring-1 focus:ring-[#284ba5]/50 focus:border-[#284ba5]/50 outline-none" placeholder="#" />
@@ -160,7 +160,7 @@ export default function VehicleListPage() {
                     </div>
                 </div>
             </div>
-            
+
             {isAddModalOpen && <AddVehicleModal onClose={() => setIsAddModalOpen(false)} editingVehicle={editingVehicle} />}
         </div>
     );

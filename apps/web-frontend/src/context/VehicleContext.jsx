@@ -4,12 +4,15 @@ import { io } from 'socket.io-client';
 
 const VehicleContext = createContext();
 
-export function VehicleProvider({ children }) {
-    const API_BASE_URL = 'http://localhost:5000/api';
-    const SOCKET_URL = 'http://localhost:5000';
+// #6: Dùng biến môi trường thay vì hardcode localhost
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const SOCKET_URL   = import.meta.env.VITE_SOCKET_URL || 'http://localhost:5000';
 
+export function VehicleProvider({ children }) {
     const [vehicles, setVehicles] = useState([]);
-    
+    // #10: Track trạng thái kết nối WebSocket để hiển thị cảnh báo trên UI
+    const [isConnected, setIsConnected] = useState(false);
+
     // Initial Database Load
     useEffect(() => {
         const fetchVehicles = async () => {
@@ -27,11 +30,16 @@ export function VehicleProvider({ children }) {
 
     // Setup Socket Connect
     useEffect(() => {
-        const socket = io(SOCKET_URL);
-
-        socket.on('connect', () => {
-            console.log("Connected to OBU Realtime WebSocket Hub");
+        const socket = io(SOCKET_URL, {
+            reconnectionAttempts: 10,
+            reconnectionDelay: 2000,
         });
+
+        // #10: Lắng nghe đầy đủ lifecycle của socket
+        socket.on('connect',       () => { console.log("WS: Connected"); setIsConnected(true); });
+        socket.on('disconnect',    () => { console.warn("WS: Disconnected"); setIsConnected(false); });
+        socket.on('connect_error', () => { console.error("WS: Connection error"); setIsConnected(false); });
+        socket.on('reconnect',     () => { console.log("WS: Reconnected"); setIsConnected(true); });
 
         socket.on('vehicle_moved', (incomingData) => {
             setVehicles(prevVehicles => {
@@ -52,7 +60,7 @@ export function VehicleProvider({ children }) {
                         lastUpdate: Date.now()
                     };
                     return updated;
-                } 
+                }
                 // New unseen vehicle
                 return [...prevVehicles, {
                     id: Date.now(),
@@ -76,7 +84,7 @@ export function VehicleProvider({ children }) {
     }, []);
 
     return (
-        <VehicleContext.Provider value={{ vehicles, setVehicles, API_BASE_URL }}>
+        <VehicleContext.Provider value={{ vehicles, setVehicles, API_BASE_URL, isConnected }}>
             {children}
         </VehicleContext.Provider>
     );

@@ -23,22 +23,22 @@ export default function VehicleList({ vehicles, onSelectVehicle, selectedVehicle
         <div className="flex flex-col h-full bg-white border-r border-gray-200">
             {/* Header & Title */}
             <div className="p-5 pb-0">
-                <h2 className="text-2xl font-bold text-gray-800 tracking-tight">Danh sách đội xe ({vehicles.length})</h2>
-                
+                <h2 className="text-xl font-bold text-gray-800 tracking-tight">Danh sách đội xe ({vehicles.length})</h2>
+
                 {/* Search / Filter Row */}
                 <div className="flex gap-2 mt-4 items-center">
                     <div className="relative flex-1">
                         <svg className="w-4 h-4 text-gray-400 absolute left-3 top-3 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-                        <Input 
+                        <Input
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            placeholder="Tìm kiếm biển số xe, tải xế,..." 
+                            placeholder="Tìm kiếm biển số xe, tải xế,..."
                             className="pl-9 h-10 w-full bg-gray-50 border-gray-200 shadow-sm"
                         />
                     </div>
-                    <Button variant="outline" className="h-10 px-3 w-10 text-gray-500">
+                    {/* <Button variant="outline" className="h-10 px-3 w-10 text-gray-500">
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path></svg>
-                    </Button>
+                    </Button> */}
                 </div>
 
                 {/* Status KPI Blocks */}
@@ -86,8 +86,8 @@ export default function VehicleList({ vehicles, onSelectVehicle, selectedVehicle
             {/* Vehicle Rows */}
             <div className="flex-1 overflow-y-auto w-full pb-4">
                 {filteredVehicles.map((v) => (
-                    <div 
-                        key={v.imei} 
+                    <div
+                        key={v.imei}
                         onClick={() => onSelectVehicle(v)}
                         className={`
                             px-4 py-3 border-b border-gray-100 cursor-pointer transition-colors

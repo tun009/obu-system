@@ -15,8 +15,8 @@ export function formatJourneyData(rawLogs) {
         
         let status = 'OFFLINE';
         
-        // Ưu tiên số 1: Vận tốc GPS
-        if (speed >= 3) {
+        // Ưu tiên số 1: Vận tốc GPS (ngưỡng 1km/h - thống nhất toàn hệ thống)
+        if (speed >= 1) {
             status = 'RUNNING';
         } else if (rpm > 0) {
             // Đứng im nhưng có vòng tua máy -> Dừng đỗ/Nổ máy
@@ -79,7 +79,7 @@ export function formatJourneyData(rawLogs) {
     stats.engineOnMin = Math.round(stats.engineOnMin);
 
     return {
-        logs: formattedLogs.reverse(), // UI Timeline thường xếp mới nhất trên đầu
+        logs: formattedLogs, // Thứ tự ASC (cũ -> mới), nhất quán với ORDER BY timestamp ASC từ backend
         stats
     };
 }

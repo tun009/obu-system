@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import CarIcon from './ui/CarIcon';
@@ -15,13 +15,19 @@ L.Icon.Default.mergeOptions({
 });
 
 // Create custom SVG Leaflet Marker based on React CarIcon
-const createCustomMarker = (status, direction = 0) => {
-    const rawSvg = ReactDOMServer.renderToString(<CarIcon status={status} width={24} height={40} />);
+const createCustomMarker = (status, direction = 0, label = '') => {
+    const iconH = label ? 56 : 40; // SVG cao hơn khi có label biển số
+    const rawSvg = ReactDOMServer.renderToString(
+        <CarIcon status={status} label={label} width={24} height={iconH} />
+    );
     return L.divIcon({
         className: 'custom-car-marker',
-        html: `<div style="transform: translateY(-50%) translateX(-50%) rotate(${direction}deg); transition: transform 0.5s ease-out;">${rawSvg}</div>`,
-        iconSize: [24, 40],
-        iconAnchor: [12, 20], // Center
+        // iconAnchor [12, 20] đã canh giữa icon (tâm 24x40) với tọa độ bản đồ.
+        // KHÔNG dùng translateX/Y trong CSS vì kết hợp với rotate() sẽ translate theo
+        // trục đã bị xoay → icon trôi xa khỏi tọa độ thực.
+        html: `<div style="transform: rotate(${direction}deg); transform-origin: 12px 20px; transition: transform 0.5s ease-out;">${rawSvg}</div>`,
+        iconSize: [24, iconH],
+        iconAnchor: [12, 20],
         popupAnchor: [0, -20]
     });
 };
@@ -67,7 +73,7 @@ export default function MapDashboard({ vehicles, selectedVehicle }) {
                         <Marker
                             key={v.imei}
                             position={[v.lat, v.lng]}
-                            icon={createCustomMarker(v.status, v.direction)}
+                            icon={createCustomMarker(v.status, v.direction, v.licensePlate || v.imei.slice(-6))}
                             zIndexOffset={selectedVehicle?.imei === v.imei ? 1000 : 0}
                         >
                             <Popup className="obu-popup">

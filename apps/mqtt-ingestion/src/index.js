@@ -10,6 +10,8 @@ const redisPublisher = new Redis(process.env.REDIS_URL || 'redis://localhost:637
 redisPublisher.on('connect', () => console.log('Redis Publisher Connected'));
 
 // Memory Cache for Vehicle IDs to prevent excessive DB queries
+// #5: Cache entry: { id: number, cachedAt: number } — TTL 30 min
+const CACHE_TTL_MS = 30 * 60 * 1000;
 const vehicleCache = new Map();
 // Buffer array for batch inserting logs to prevent Database Connection Pool Exhaustion
 const journeyLogsBuffer = [];
@@ -72,18 +74,25 @@ mqttClient.on('message', async (topic, message) => {
     }
 
     try {
-        // --- 1. In-Memory Vehicle Cache ---
-        let vehicleId = vehicleCache.get(imei);
-        if (!vehicleId) {
+        // --- 1. In-Memory Vehicle Cache (with TTL) ---
+        const cached = vehicleCache.get(imei);
+        const isExpired = cached && (Date.now() - cached.cachedAt > CACHE_TTL_MS);
+
+        let vehicleId;
+        if (cached && !isExpired) {
+            vehicleId = cached.id;
+        } else {
+            // #5: Cache miss hoặc hết hạn → query lại DB
             let vehicle = await prisma.vehicle.findUnique({ where: { imei } });
 
             // Drop message if vehicle is completely unknown (no more auto-creation)
             if (!vehicle) {
                 console.log(`[Drop] Ignored payload for unregistered vehicle: ${imei}`);
+                if (isExpired) vehicleCache.delete(imei); // Dọn cache cũ
                 return;
             }
             vehicleId = vehicle.id;
-            vehicleCache.set(imei, vehicleId);
+            vehicleCache.set(imei, { id: vehicleId, cachedAt: Date.now() });
         }
 
         // --- 2. Update Latest State (Vehicles Table) ---
@@ -149,39 +158,47 @@ setInterval(async () => {
     const batchToInsert = [...journeyLogsBuffer];
     journeyLogsBuffer.length = 0;
 
-    try {
-        // Build raw SQL for bulk insertion
-        const values = batchToInsert.map(log => {
-            const geom = log.isValidGPS
-                ? `ST_SetSRID(ST_MakePoint(${log.longitude}, ${log.latitude}), 4326)`
-                : `NULL`;
+    const values = batchToInsert.map(log => {
+        const geom = log.isValidGPS
+            ? `ST_SetSRID(ST_MakePoint(${log.longitude}, ${log.latitude}), 4326)`
+            : `NULL`;
+        return `(
+            ${log.vehicleId}, 
+            ${geom}, 
+            ${log.speed}, 
+            ${log.rpm}, 
+            ${log.fuel},
+            ${log.coolantTemp},
+            ${log.throttle},
+            ${log.direction},
+            ${log.engineStatus}, 
+            '${log.timestamp}'::timestamptz
+        )`;
+    }).join(',');
 
-            return `(
-                ${log.vehicleId}, 
-                ${geom}, 
-                ${log.speed}, 
-                ${log.rpm}, 
-                ${log.fuel},
-                ${log.coolantTemp},
-                ${log.throttle},
-                ${log.direction},
-                ${log.engineStatus}, 
-                '${log.timestamp}'::timestamptz
-            )`;
-        }).join(',');
+    const query = `
+        INSERT INTO journey_logs (
+            "vehicle_id", "location", "speed", "rpm", "fuel_level", 
+            "coolant_temp", "throttle", "direction", "engine_status", "timestamp"
+        ) VALUES ${values};
+    `;
 
-        const query = `
-            INSERT INTO journey_logs (
-                "vehicle_id", "location", "speed", "rpm", "fuel_level", 
-                "coolant_temp", "throttle", "direction", "engine_status", "timestamp"
-            ) VALUES ${values};
-        `;
-
-        await prisma.$executeRawUnsafe(query);
-        console.log(`[Batch Insert] Successfully ingested ${batchToInsert.length} logs.`);
-    } catch (error) {
-        console.error('[Batch Insert Error] Failed to insert logs:', error);
-        // Fallback: put them back to buffer or save to dead letter queue, but for now we log it.
+    // #4: Retry tối đa 3 lần với delay tăng dần
+    let attempt = 0;
+    while (attempt < 3) {
+        try {
+            await prisma.$executeRawUnsafe(query);
+            console.log(`[Batch Insert] OK: ${batchToInsert.length} logs.`);
+            break; // thành công
+        } catch (error) {
+            attempt++;
+            if (attempt >= 3) {
+                console.error(`[Batch Insert] FAILED after 3 attempts. ${batchToInsert.length} logs dropped.`, error.message);
+            } else {
+                console.warn(`[Batch Insert] Retry ${attempt}/3 in ${attempt * 500}ms...`);
+                await new Promise(r => setTimeout(r, attempt * 500));
+            }
+        }
     }
 }, 2000);
 

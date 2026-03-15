@@ -2,15 +2,17 @@ import React from 'react';
 
 // Status color mapping for SVG filling
 const statusColorMap = {
-    RUNNING: "#10b981", // Emerald 500
-    STOPPED: "#f59e0b", // Amber 500
-    PARKED: "#64748b",  // Slate 500
-    LOST_SIGNAL: "#ef4444" // Red 500
+    RUNNING: "#10b981",     // Emerald 500 - Đang chạy
+    STOPPED: "#f59e0b",     // Amber 500 - Dừng xe
+    PARKED: "#64748b",      // Slate 500 - Đỗ xe
+    LOST_SIGNAL: "#ef4444", // Red 500 - Mất tín hiệu
+    OFFLINE: "#94a3b8",     // Slate 400 - Offline hẳn
+    ONLINE: "#3b82f6",      // Blue 500
 };
 
-export default function CarIcon({ status = 'ONLINE', className = '', style = {}, width = 24, height = 40 }) {
+export default function CarIcon({ status = 'ONLINE', label = '', className = '', style = {}, width = 24, height = 40 }) {
     const rawStatus = status || 'ONLINE';
-    const mainColor = statusColorMap[rawStatus] || "#3b82f6"; // default blue
+    const mainColor = statusColorMap[rawStatus] || "#94a3b8";
 
     return (
         <svg 
@@ -47,6 +49,31 @@ export default function CarIcon({ status = 'ONLINE', className = '', style = {},
             {/* Taillights */}
             <rect x="5.5" y="37" width="3" height="1.5" rx="0.5" fill="#ef4444"/>
             <rect x="15.5" y="37" width="3" height="1.5" rx="0.5" fill="#ef4444"/>
+
+            {/* Label biển số hiển thị dưới xe nếu có */}
+            {label && (
+                <>
+                    <rect
+                        x="-10" y="41"
+                        width="44" height="14"
+                        rx="3"
+                        fill="white"
+                        stroke={mainColor}
+                        strokeWidth="1.5"
+                    />
+                    <text
+                        x="12" y="51"
+                        textAnchor="middle"
+                        fontSize="7"
+                        fontWeight="700"
+                        fontFamily="monospace"
+                        fill="#1e293b"
+                        letterSpacing="0.3"
+                    >
+                        {label}
+                    </text>
+                </>
+            )}
         </svg>
     );
 }
