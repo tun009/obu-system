@@ -16,6 +16,7 @@ enum VehicleStatus {
   STOPPED
   PARKED
   LOST_SIGNAL
+  RUNNING
 }
 
 model Vehicle {

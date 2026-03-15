@@ -18,28 +18,26 @@ function parseObuMessage(messageString) {
 }
 
 function determineVehicleStatus(rpm, speed, carResponse) {
+    const currentRpm = parseFloat(rpm) || 0;
+    let currentSpeed = parseFloat(speed) || 0;
+
+    // Ưu tiên tuyệt đối: Vận tốc GPS (Ngưỡng 3km/h để chống nhiễu tọa độ trôi dạt tĩnh)
+    const SPEED_THRESHOLD = 3; 
+    
+    if (currentSpeed >= SPEED_THRESHOLD) {
+        return 'RUNNING';
+    }
+
+    // Nếu xe đứng im (Speed < 3), ta mới dùng tới cảm biến ACC & RPM của OBU/ODB2
     if (String(carResponse) === '0') {
         return 'PARKED';
     }
 
-    const currentRpm = parseFloat(rpm) || 0;
-    let currentSpeed = parseFloat(speed) || 0;
-
-    // Ngưỡng tốc độ để coi như xe đang chạy
-    const SPEED_THRESHOLD = 1;
-    if (currentSpeed < SPEED_THRESHOLD) {
-        currentSpeed = 0;
+    if (currentRpm > 0) {
+        return 'STOPPED'; // Xe nổ máy nhưng đứng yên
     }
 
-    if (currentRpm === 0 && currentSpeed === 0) {
-        return 'PARKED';
-    } else if (currentRpm > 0 && currentSpeed === 0) {
-        return 'STOPPED';
-    } else if (currentSpeed > 0) {
-        return 'RUNNING';
-    }
-
-    return 'ONLINE';
+    return 'PARKED';
 }
 
 module.exports = {

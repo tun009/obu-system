@@ -40,10 +40,6 @@ export default function AddVehicleModal({ onClose, editingVehicle }) {
                 await axios.put(`${API_BASE_URL}/vehicles/${editingVehicle.imei}`, { licensePlate: plate, type });
                 setVehicles(prev => prev.map(v => v.imei === editingVehicle.imei ? { ...v, licensePlate: plate, type } : v));
             } else {
-                if (checkStatus !== 'success') {
-                    alert('Vui lòng kiểm tra kết nối thiết bị trước khi lưu.');
-                    return;
-                }
                 const res = await axios.post(`${API_BASE_URL}/vehicles`, { imei, licensePlate: plate, type });
                 // If the vehicle doesn't exist yet in the Websocket array, append it manually as OFFLINE
                 setVehicles(prev => {

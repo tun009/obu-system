@@ -48,6 +48,7 @@ export function VehicleProvider({ children }) {
                         status: incomingData.status,
                         coolantTemp: incomingData.coolantTemp,
                         throttle: incomingData.throttle,
+                        direction: incomingData.direction,
                         lastUpdate: Date.now()
                     };
                     return updated;
@@ -65,6 +66,7 @@ export function VehicleProvider({ children }) {
                     status: incomingData.status,
                     coolantTemp: incomingData.coolantTemp,
                     throttle: incomingData.throttle,
+                    direction: incomingData.direction,
                     lastUpdate: Date.now()
                 }];
             });

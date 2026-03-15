@@ -44,19 +44,23 @@ mqttClient.on('message', async (topic, message) => {
 
     const topicParts = topic.split('/');
     if (topicParts.length !== 2 || topicParts[0] !== 'obuv1') return;
-    
+
     const imei = topicParts[1].trim();
     if (!imei) return;
 
     let longitude = parseFloat(payload.long);
     let latitude = parseFloat(payload.lat);
-    const speed = parseFloat(payload.car_speed) || 0;
+    let speed = parseFloat(payload.speed) || 0; // Lấy speed từ thiết bị OBU thay vì thông số taplo
     const rpm = parseInt(payload.car_rpm) || 0;
     const fuel = parseFloat(payload.car_fuel_level) || 0;
     const coolantTemp = parseFloat(payload.car_coolant_temp) || 0;
     const throttle = parseFloat(payload.car_throttle) || 0;
-    const direction = parseFloat(payload.direction) || 0;
+    let direction = parseFloat(payload.dir) || 0; // Lấy hướng đi từ trường dir của OBU
     const carResponse = payload.car_response;
+
+
+    // Lọc nhiễu dữ liệu: Hướng đi lệch góc chuẩn độ 0-360
+    if (direction < 0 || direction >= 360) direction = 0;
 
     const status = determineVehicleStatus(rpm, speed, carResponse);
 
@@ -72,7 +76,7 @@ mqttClient.on('message', async (topic, message) => {
         let vehicleId = vehicleCache.get(imei);
         if (!vehicleId) {
             let vehicle = await prisma.vehicle.findUnique({ where: { imei } });
-            
+
             // Drop message if vehicle is completely unknown (no more auto-creation)
             if (!vehicle) {
                 console.log(`[Drop] Ignored payload for unregistered vehicle: ${imei}`);
@@ -84,8 +88,8 @@ mqttClient.on('message', async (topic, message) => {
 
         // --- 2. Update Latest State (Vehicles Table) ---
         // For current_location, if invalid, we might want to keep the old one or set to NULL. Since requirements state to filter them, we set to NULL so it's accurate.
-        const locationSql = isValidGPS 
-            ? `ST_SetSRID(ST_MakePoint(${longitude}, ${latitude}), 4326)` 
+        const locationSql = isValidGPS
+            ? `ST_SetSRID(ST_MakePoint(${longitude}, ${latitude}), 4326)`
             : `NULL`;
 
         await prisma.$executeRawUnsafe(`
@@ -129,7 +133,7 @@ mqttClient.on('message', async (topic, message) => {
             direction: direction,
             status: status
         });
-        
+
         redisPublisher.publish('OBU_REALTIME_STREAM', realTimePing);
 
     } catch (error) {
@@ -148,10 +152,10 @@ setInterval(async () => {
     try {
         // Build raw SQL for bulk insertion
         const values = batchToInsert.map(log => {
-            const geom = log.isValidGPS 
-                ? `ST_SetSRID(ST_MakePoint(${log.longitude}, ${log.latitude}), 4326)` 
+            const geom = log.isValidGPS
+                ? `ST_SetSRID(ST_MakePoint(${log.longitude}, ${log.latitude}), 4326)`
                 : `NULL`;
-            
+
             return `(
                 ${log.vehicleId}, 
                 ${geom}, 

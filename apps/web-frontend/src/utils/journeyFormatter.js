@@ -6,22 +6,45 @@ export function formatJourneyData(rawLogs) {
     // Đảm bảo dữ liệu sắp xếp theo thứ tự thời gian tăng dần để tính toán
     const sortedLogs = [...rawLogs].sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
 
+    let lastLat = null;
+    let lastLng = null;
+
     const formattedLogs = sortedLogs.map(log => {
         const speed = parseFloat(log.speed) || 0;
         const rpm = parseInt(log.rpm) || 0;
         
         let status = 'OFFLINE';
-        if (rpm > 0) {
-            status = speed > 5 ? 'RUNNING' : 'STOPPED';
+        
+        // Ưu tiên số 1: Vận tốc GPS
+        if (speed >= 3) {
+            status = 'RUNNING';
+        } else if (rpm > 0) {
+            // Đứng im nhưng có vòng tua máy -> Dừng đỗ/Nổ máy
+            status = 'STOPPED';
         } else {
+            // Không chạy, không vòng tua -> Tắt máy
             status = 'PARKED';
+        }
+
+        let parsedLat = parseFloat(log.lat);
+        let parsedLng = parseFloat(log.lng);
+        let validLocation = true;
+
+        if (isNaN(parsedLat) || isNaN(parsedLng) || (parsedLat === 0 && parsedLng === 0)) {
+            parsedLat = lastLat;
+            parsedLng = lastLng;
+            validLocation = false;
+        } else {
+            lastLat = parsedLat;
+            lastLng = parsedLng;
         }
         
         return {
             ...log,
             status,
-            lat: parseFloat(log.lat),
-            lng: parseFloat(log.lng),
+            lat: parsedLat,
+            lng: parsedLng,
+            validLocation,
             date: new Date(log.timestamp)
         };
     });

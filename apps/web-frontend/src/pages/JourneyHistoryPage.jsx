@@ -7,6 +7,9 @@ import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
 import { FileSpreadsheet } from 'lucide-react';
 import { formatJourneyData } from '../utils/journeyFormatter';
+import ReactDOMServer from 'react-dom/server';
+import CarIcon from '../components/ui/CarIcon';
+import DatePicker from 'react-datepicker';
 
 // Format Date to YYYY-MM-DDTHH:mm string for datetime-local input
 const formatDateTimeLocal = (date) => {
@@ -29,43 +32,75 @@ function JourneyMap({ formattedLogs, zoomToLog }) {
     }, [zoomToLog, formattedLogs, map]);
 
     const allPoints = (formattedLogs || [])
-        .filter(p => !isNaN(p.lat) && !isNaN(p.lng))
+        .filter(p => p.lat != null && p.lng != null && !isNaN(p.lat) && !isNaN(p.lng))
         .map(p => [p.lat, p.lng]);
 
-    const getMarkerColor = (status) => {
-        switch (status) {
-            case 'RUNNING': return '#22c55e'; // green-500
-            case 'STOPPED': return '#f59e0b'; // amber-500
-            case 'PARKED': return '#6b7280'; // gray-500
-            default: return '#ef4444'; // red-500
-        }
+    const createLabelIcon = (label, bgColor) => L.divIcon({
+        className: 'custom-label-marker',
+        html: `<div style="background-color: ${bgColor}; color: white; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3); z-index: 500;">${label}</div>`,
+        iconSize: [24, 24],
+        iconAnchor: [12, 12]
+    });
+
+    const createCarMarker = (status, direction = 0) => {
+        const rawSvg = ReactDOMServer.renderToString(<CarIcon status={status} width={24} height={40} />);
+        return L.divIcon({
+            className: 'custom-car-marker',
+            html: `<div style="transform: translateY(-50%) translateX(-50%) rotate(${direction}deg); transition: transform 0.3s ease-out;">${rawSvg}</div>`,
+            iconSize: [24, 40],
+            iconAnchor: [12, 20], // Center
+            popupAnchor: [0, -20]
+        });
     };
 
-    const createIcon = (color) => L.divIcon({
-        className: 'custom-history-marker',
-        html: `<div style="background-color: ${color}; width: 10px; height: 10px; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 2px rgba(0,0,0,0.3);"></div>`,
-        iconSize: [10, 10],
-        iconAnchor: [5, 5]
-    });
+    const validLogs = (formattedLogs || []).filter(log => log.lat != null && log.lng != null && !isNaN(log.lat) && !isNaN(log.lng));
+    const startLog = validLogs.length > 0 ? validLogs[0] : null;
+    const endLog = validLogs.length > 0 ? validLogs[validLogs.length - 1] : null;
 
     return (
         <>
-            <Polyline positions={allPoints} color="#3b82f6" weight={3} opacity={0.8} />
-            {formattedLogs.map((log, idx) => (
-                <Marker
-                    key={idx}
-                    position={[log.lat, log.lng]}
-                    icon={createIcon(getMarkerColor(log.status))}
-                >
+            <Polyline positions={validLogs.map(p => [p.lat, p.lng])} color="#3b82f6" weight={4} opacity={0.8} />
+            
+            {/* Start Marker (Điểm bắt đầu) */}
+            {startLog && (
+                <Marker position={[startLog.lat, startLog.lng]} icon={createLabelIcon('S', '#22c55e')} zIndexOffset={800}>
                     <Popup className="obu-popup text-sm font-sans">
-                        <div className="font-bold text-gray-800 mb-1">{log.status === 'RUNNING' ? 'Di chuyển' : log.status === 'STOPPED' ? 'Dừng xe' : 'Đỗ xe'}</div>
-                        <div className="text-gray-600 text-xs mb-0.5">Vận tốc: {Math.round(log.speed || 0)} km/h</div>
-                        <div className="text-gray-500 text-[11px] leading-tight">
-                            Báo cáo: {log.date.toLocaleDateString('en-GB')} {log.date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                        <div className="font-bold text-gray-800 mb-1">Điểm xuất phát</div>
+                        <div className="text-gray-500 text-[11px] leading-tight flex flex-col gap-1">
+                            <span>Thời gian: {startLog.date.toLocaleDateString('en-GB')} {startLog.date.toLocaleTimeString('en-GB')}</span>
                         </div>
                     </Popup>
                 </Marker>
-            ))}
+            )}
+
+            {/* End Marker (Điểm kết thúc) */}
+            {endLog && startLog !== endLog && (
+                <Marker position={[endLog.lat, endLog.lng]} icon={createLabelIcon('E', '#ef4444')} zIndexOffset={800}>
+                    <Popup className="obu-popup text-sm font-sans">
+                        <div className="font-bold text-gray-800 mb-1">Điểm kết thúc</div>
+                        <div className="text-gray-500 text-[11px] leading-tight flex flex-col gap-1">
+                            <span>Thời gian: {endLog.date.toLocaleDateString('en-GB')} {endLog.date.toLocaleTimeString('en-GB')}</span>
+                        </div>
+                    </Popup>
+                </Marker>
+            )}
+            
+            {/* Highlight Selected Hover Log */}
+            {zoomToLog && zoomToLog.lat != null && zoomToLog.lng != null && !isNaN(zoomToLog.lat) && !isNaN(zoomToLog.lng) && (
+                <Marker
+                    position={[zoomToLog.lat, zoomToLog.lng]}
+                    icon={createCarMarker(zoomToLog.status, zoomToLog.direction)}
+                    zIndexOffset={1000}
+                >
+                    <Popup className="obu-popup text-sm font-sans" autoPan={false}>
+                        <div className="font-bold text-gray-800 mb-1">{zoomToLog.status === 'RUNNING' ? 'Di chuyển' : zoomToLog.status === 'STOPPED' ? 'Dừng xe' : 'Đỗ xe'}</div>
+                        <div className="text-gray-600 text-xs mb-0.5">Vận tốc: {Math.round(zoomToLog.speed || 0)} km/h</div>
+                        <div className="text-gray-500 text-[11px] leading-tight">
+                            Báo cáo: {zoomToLog.date.toLocaleDateString('en-GB')} {zoomToLog.date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                        </div>
+                    </Popup>
+                </Marker>
+            )}
         </>
     );
 }
@@ -73,9 +108,9 @@ function JourneyMap({ formattedLogs, zoomToLog }) {
 export default function JourneyHistoryPage() {
     const { vehicles, API_BASE_URL } = useVehicles();
 
-    // Initial Dates (last 24h)
+    // Initial Dates (last 1h)
     const [endDate, setEndDate] = useState(new Date());
-    const [startDate, setStartDate] = useState(new Date(Date.now() - 24 * 60 * 60 * 1000));
+    const [startDate, setStartDate] = useState(new Date(Date.now() - 1 * 60 * 60 * 1000));
 
     const [selectedImei, setSelectedImei] = useState('');
     const [loading, setLoading] = useState(false);
@@ -223,7 +258,7 @@ export default function JourneyHistoryPage() {
 
                     {/* Timeline Filters */}
                     <div className="flex gap-2 p-3 border-b border-gray-100 bg-gray-50/50 overflow-x-auto no-scrollbar shrink-0">
-                        {[{ v: 'ALL', l: 'Tất cả' }, { v: 'RUNNING', l: 'Đang chạy' }, { v: 'STOPPED', l: 'Dừng xe' }, { v: 'PARKED', l: 'Đỗ xe' }, { v: 'ENGINE_ON', l: 'Nổ máy' }, { v: 'ENGINE_OFF', l: 'Tắt máy' }].map(opt => (
+                        {[{ v: 'ALL', l: 'Tất cả' }, { v: 'RUNNING', l: 'Đang chạy' }, { v: 'STOPPED', l: 'Dừng xe' }, { v: 'PARKED', l: 'Đỗ xe' }].map(opt => (
                             <button
                                 key={opt.v}
                                 onClick={() => setStatusFilter(opt.v)}
@@ -262,7 +297,9 @@ export default function JourneyHistoryPage() {
                                             <div className="flex-1 min-w-0">
                                                 <div className="font-semibold text-gray-800 text-sm mb-1 leading-tight flex items-center justify-between">
                                                     <span>{log.status === 'RUNNING' ? 'Di chuyển' : log.status === 'STOPPED' ? 'Dừng xe' : 'Đỗ xe'}</span>
-                                                    <span className="text-xs font-mono text-gray-500 bg-gray-100 px-1 rounded">{log.lat.toFixed(5)}, {log.lng.toFixed(5)}</span>
+                                                    <span className="text-xs font-mono text-gray-500 bg-gray-100 px-1 rounded">
+                                                        {log.validLocation && log.lat != null && log.lng != null ? `${log.lat.toFixed(5)}, ${log.lng.toFixed(5)}` : 'Mất GPS'}
+                                                    </span>
                                                 </div>
                                                 <div className="text-xs text-gray-500 truncate leading-snug flex items-center gap-3">
                                                     <span>RPM: {log.rpm}</span>

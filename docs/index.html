@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OBU Tracker - Real-time Vehicle Monitoring</title>
+  <meta name="description" content="Real-time OBU device tracker with live map visualization">
+  
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- App CSS -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Header -->
+  <header id="app-header">
+    <div class="header-left">
+      <div class="logo-icon">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"/>
+          <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/>
+        </svg>
+      </div>
+      <h1>OBU Tracker</h1>
+    </div>
+    <div class="header-right">
+      <div class="connection-status" id="connectionStatus">
+        <span class="status-dot" id="statusDot"></span>
+        <span class="status-text" id="statusText">Đang kết nối...</span>
+      </div>
+      <div class="record-counter">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+          <polyline points="14 2 14 8 20 8"/>
+          <line x1="16" y1="13" x2="8" y2="13"/>
+          <line x1="16" y1="17" x2="8" y2="17"/>
+        </svg>
+        <span id="recordCount">0</span> bản ghi
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main id="app-main">
+    <!-- Sidebar -->
+    <aside id="sidebar">
+      <!-- Device Info Card -->
+      <div class="card device-card">
+        <div class="card-header">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="4" y="4" width="16" height="16" rx="2" ry="2"/>
+            <rect x="9" y="9" width="6" height="6"/>
+            <line x1="9" y1="1" x2="9" y2="4"/>
+            <line x1="15" y1="1" x2="15" y2="4"/>
+            <line x1="9" y1="20" x2="9" y2="23"/>
+            <line x1="15" y1="20" x2="15" y2="23"/>
+            <line x1="20" y1="9" x2="23" y2="9"/>
+            <line x1="20" y1="14" x2="23" y2="14"/>
+            <line x1="1" y1="9" x2="4" y2="9"/>
+            <line x1="1" y1="14" x2="4" y2="14"/>
+          </svg>
+          <span>Thiết bị OBU</span>
+        </div>
+        <div class="card-body">
+          <div class="device-id">
+            <span class="label">Device ID</span>
+            <span class="value">25075738112</span>
+          </div>
+          <div class="device-id">
+            <span class="label">MQTT Topic</span>
+            <span class="value mono">25075738112:</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Location Card -->
+      <div class="card location-card">
+        <div class="card-header">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+            <circle cx="12" cy="10" r="3"/>
+          </svg>
+          <span>Vị trí</span>
+        </div>
+        <div class="card-body">
+          <div class="stat-row">
+            <span class="stat-label">Latitude</span>
+            <span class="stat-value" id="latValue">--</span>
+          </div>
+          <div class="stat-row">
+            <span class="stat-label">Longitude</span>
+            <span class="stat-value" id="lonValue">--</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Speed & Altitude Card -->
+      <div class="card stats-card">
+        <div class="card-header">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+          </svg>
+          <span>Thông số</span>
+        </div>
+        <div class="card-body">
+          <div class="stats-grid">
+            <div class="stat-item">
+              <div class="stat-icon speed-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"/>
+                  <path d="M12 6v6l4 2"/>
+                </svg>
+              </div>
+              <div class="stat-info">
+                <span class="stat-number" id="speedValue">--</span>
+                <span class="stat-unit">km/h</span>
+              </div>
+              <span class="stat-name">Tốc độ</span>
+            </div>
+            <div class="stat-item">
+              <div class="stat-icon alt-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M14.5 10c-.83 0-1.5-.67-1.5-1.5v-5c0-.83.67-1.5 1.5-1.5s1.5.67 1.5 1.5v5c0 .83-.67 1.5-1.5 1.5z"/>
+                  <path d="M20.5 10H19V8.5c0-.83.67-1.5 1.5-1.5s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/>
+                  <path d="M9.5 14c.83 0 1.5.67 1.5 1.5v5c0 .83-.67 1.5-1.5 1.5S8 21.33 8 20.5v-5c0-.83.67-1.5 1.5-1.5z"/>
+                  <path d="M3.5 14H5v1.5c0 .83-.67 1.5-1.5 1.5S2 16.33 2 15.5 2.67 14 3.5 14z"/>
+                  <path d="M14 14.5c0-.83.67-1.5 1.5-1.5h5c.83 0 1.5.67 1.5 1.5s-.67 1.5-1.5 1.5h-5c-.83 0-1.5-.67-1.5-1.5z"/>
+                  <path d="M15 19v1.5c0 .83-.67 1.5-1.5 1.5s-1.5-.67-1.5-1.5-.67-1.5-1.5-1.5"/>
+                  <path d="M10 9.5C10 10.33 9.33 11 8.5 11h-5C2.67 11 2 10.33 2 9.5S2.67 8 3.5 8h5c.83 0 1.5.67 1.5 1.5z"/>
+                  <path d="m8 5 1.5-1.5"/>
+                </svg>
+              </div>
+              <div class="stat-info">
+                <span class="stat-number" id="altValue">--</span>
+                <span class="stat-unit">m</span>
+              </div>
+              <span class="stat-name">Độ cao</span>
+            </div>
+            <div class="stat-item">
+              <div class="stat-icon dir-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"/>
+                  <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/>
+                </svg>
+              </div>
+              <div class="stat-info">
+                <span class="stat-number" id="dirValue">--</span>
+                <span class="stat-unit">°</span>
+              </div>
+              <span class="stat-name">Hướng</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Car Status Card (OBD2) -->
+      <div class="card car-stats-card">
+        <div class="card-header">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 6l-6 12"/>
+            <circle cx="12" cy="12" r="10"/>
+          </svg>
+          <span>Thông số xe</span>
+        </div>
+        <div class="card-body">
+          <div class="stats-grid">
+            <div class="stat-item">
+              <div class="stat-icon rpm-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
+                </svg>
+              </div>
+              <div class="stat-info">
+                <span class="stat-number" id="rpmValue">--</span>
+                <span class="stat-unit">rpm</span>
+              </div>
+              <span class="stat-name">Vòng tua</span>
+            </div>
+            <div class="stat-item">
+              <div class="stat-icon car-speed-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="3" y="11" width="18" height="8" rx="2" ry="2"/>
+                  <path d="M19 11v-2a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v2"/>
+                  <circle cx="7" cy="19" r="2"/>
+                  <circle cx="17" cy="19" r="2"/>
+                </svg>
+              </div>
+              <div class="stat-info">
+                <span class="stat-number" id="carSpeedValue">--</span>
+                <span class="stat-unit">km/h</span>
+              </div>
+              <span class="stat-name">Tốc độ xe</span>
+            </div>
+            <div class="stat-item">
+              <div class="stat-icon temp-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z"/>
+                </svg>
+              </div>
+              <div class="stat-info">
+                <span class="stat-number" id="coolantTempValue">--</span>
+                <span class="stat-unit">°C</span>
+              </div>
+              <span class="stat-name">Nhiệt độ</span>
+            </div>
+            <div class="stat-item">
+              <div class="stat-icon throttle-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+                </svg>
+              </div>
+              <div class="stat-info">
+                <span class="stat-number" id="throttleValue">--</span>
+                <span class="stat-unit">%</span>
+              </div>
+              <span class="stat-name">Mở ga</span>
+            </div>
+            <div class="stat-item">
+              <div class="stat-icon fuel-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M3 22v-8c0-1.1.9-2 2-2h4c1.1 0 2 .9 2 2v8M3 22h8"/>
+                  <path d="M14 2 8 8M12 2l-6 6"/>
+                  <path d="M3 12v-2c0-1.1.9-2 2-2h4c1.1 0 2 .9 2 2v2"/>
+                  <path d="M19 17v5M19 17a2 2 0 0 0 2-2v-4a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2v4a2 2 0 0 0 2 2z"/>
+                  <path d="M19 7v4M15 22h8"/>
+                </svg>
+              </div>
+              <div class="stat-info">
+                <span class="stat-number" id="fuelLevelValue">--</span>
+                <span class="stat-unit">%</span>
+              </div>
+              <span class="stat-name">Nhiên liệu</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Time Card -->
+      <div class="card time-card">
+        <div class="card-header">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <polyline points="12 6 12 12 16 14"/>
+          </svg>
+          <span>Thời gian GPS</span>
+        </div>
+        <div class="card-body">
+          <div class="stat-row">
+            <span class="stat-label">Ngày</span>
+            <span class="stat-value" id="dateValue">--</span>
+          </div>
+          <div class="stat-row">
+            <span class="stat-label">Giờ</span>
+            <span class="stat-value" id="timeValue">--</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Controls -->
+      <div class="card controls-card">
+        <button class="btn btn-primary" id="btnCenter" title="Về giữa bản đồ">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="3"/>
+            <path d="M12 2v4M12 18v4M2 12h4M18 12h4"/>
+          </svg>
+          Về vị trí hiện tại
+        </button>
+        <button class="btn btn-secondary" id="btnToggleTrail" title="Bật/tắt đường đi">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+          </svg>
+          <span id="trailBtnText">Ẩn đường đi</span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- Map -->
+    <div id="map-container">
+      <div id="map"></div>
+      <!-- Floating info on map -->
+      <div class="map-overlay" id="mapOverlay">
+        <span class="pulse-dot"></span>
+        <span id="overlayText">Đang chờ dữ liệu...</span>
+      </div>
+    </div>
+  </main>
+
+  <!-- Scripts -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

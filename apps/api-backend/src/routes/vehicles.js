@@ -56,6 +56,10 @@ router.get('/:imei/history', async (req, res) => {
         const vehicle = await prisma.vehicle.findUnique({ where: { imei } });
         if (!vehicle) return res.status(404).json({ success: false, message: 'Vehicle not found' });
 
+        // Strip "Z" from ISO string to prevent Postgres from shifting timezones
+        const startString = new Date(start).toISOString().replace('Z', '');
+        const endString = new Date(end).toISOString().replace('Z', '');
+
         // Query the massive journey_logs table. PostGIS extraction for raw Point objects.
         const history = await prisma.$queryRaw`
             SELECT 
@@ -65,15 +69,13 @@ router.get('/:imei/history', async (req, res) => {
                 coolant_temp as "coolantTemp",
                 throttle,
                 direction,
-                "timestamp", 
-                ST_X(location) as lng, 
-                ST_Y(location) as lat
+                to_char("timestamp", 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"') as "timestamp", 
+                CASE WHEN location IS NOT NULL AND (ST_X(location) != 0 AND ST_Y(location) != 0) THEN ST_X(location) ELSE NULL END as lng, 
+                CASE WHEN location IS NOT NULL AND (ST_X(location) != 0 AND ST_Y(location) != 0) THEN ST_Y(location) ELSE NULL END as lat
             FROM journey_logs
             WHERE vehicle_id = ${vehicle.id}
-              AND "timestamp" >= ${new Date(start)}
-              AND "timestamp" <= ${new Date(end)}
-              AND location IS NOT NULL
-              AND (ST_X(location) != 0 AND ST_Y(location) != 0)
+              AND "timestamp" >= ${startString}::timestamp
+              AND "timestamp" <= ${endString}::timestamp
             ORDER BY "timestamp" ASC;
         `;
 
@@ -86,9 +88,8 @@ router.get('/:imei/history', async (req, res) => {
                 SELECT location 
                 FROM journey_logs
                 WHERE vehicle_id = ${vehicle.id}
-                  AND "timestamp" >= ${new Date(start)}
-                  AND "timestamp" <= ${new Date(end)}
-                  AND location IS NOT NULL
+                  AND "timestamp" >= ${startString}::timestamp
+                  AND "timestamp" <= ${endString}::timestamp
                   AND (ST_X(location) != 0 AND ST_Y(location) != 0)
                 ORDER BY "timestamp" ASC
             ) AS ordered_logs
@@ -100,7 +101,6 @@ router.get('/:imei/history', async (req, res) => {
 
         res.json({ success: true, count: history.length, totalKm: parseFloat(totalKm), data: history });
     } catch (error) {
-        console.error(`API /history error for ${imei}:`, error);
         res.status(500).json({ success: false, message: 'Internal Server Error' });
     }
 });
