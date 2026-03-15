@@ -1,27 +1,82 @@
 version: '3.8'
 
 services:
-  # Database PostgreSQL với phần mở rộng PostGIS (Cho Bản đồ đo chiều dài)
+  # ── Database ────────────────────────────────────
   postgres:
     image: postgis/postgis:15-3.4
     container_name: obu-postgres
     restart: always
     environment:
-      POSTGRES_USER: admin
-      POSTGRES_PASSWORD: password123
-      POSTGRES_DB: obu_database
-    ports:
-      - "5432:5432"
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
     volumes:
       - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
-  # Database Redis dùng làm kênh Pub/Sub thời gian thực cho WebSocket
+  # ── Cache / Pub-Sub ──────────────────────────────
   redis:
-    image: redis:alpine
+    image: redis:7-alpine
     container_name: obu-redis
     restart: always
+    volumes:
+      - redisdata:/data
+    # Không expose port ra host — chỉ dùng internal Docker network
+
+  # ── REST API + WebSocket ─────────────────────────
+  api:
+    build:
+      context: .
+      dockerfile: apps/api-backend/Dockerfile
+    container_name: obu-api
+    restart: always
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql://${DB_USER}:${DB_PASSWORD}@postgres:5432/${DB_NAME}?schema=public
+      REDIS_URL: redis://redis:6379
+      PORT: 5000
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+
+  # ── MQTT Ingestion ───────────────────────────────
+  ingestion:
+    build:
+      context: .
+      dockerfile: apps/mqtt-ingestion/Dockerfile
+    container_name: obu-ingestion
+    restart: always
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql://${DB_USER}:${DB_PASSWORD}@postgres:5432/${DB_NAME}?schema=public
+      REDIS_URL: redis://redis:6379
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+
+  # ── Frontend (Nginx) ─────────────────────────────
+  frontend:
+    build:
+      context: .
+      dockerfile: apps/web-frontend/Dockerfile
+      args:
+        VITE_API_URL: http://${SERVER_IP}:3001/api
+        VITE_SOCKET_URL: http://${SERVER_IP}:3001
+    container_name: obu-frontend
+    restart: always
     ports:
-      - "6379:6379"
+      - "3001:80"
+    depends_on:
+      - api
 
 volumes:
   pgdata:
+  redisdata:

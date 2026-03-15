@@ -76,11 +76,11 @@ export default function VehicleList({ vehicles, onSelectVehicle, selectedVehicle
 
             {/* List Header Table-style */}
             <div className="grid grid-cols-7 gap-2 px-5 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider bg-gray-50/50">
-                <div className="col-span-2">Biển số</div>
+                <div className="col-span-3">Biển số</div>
                 <div className="col-span-2 text-center">Trạng thái</div>
                 <div className="text-right">Km/h</div>
                 <div className="text-right">N.liệu</div>
-                <div className="text-right pr-2">N.Độ</div>
+                {/* <div className="text-right pr-2">N.Độ</div> */}
             </div>
 
             {/* Vehicle Rows */}
@@ -95,7 +95,7 @@ export default function VehicleList({ vehicles, onSelectVehicle, selectedVehicle
                         `}
                     >
                         <div className="grid grid-cols-7 gap-2 items-center">
-                            <div className="col-span-2">
+                            <div className="col-span-3">
                                 <p className="font-bold text-gray-800 text-base line-clamp-1">{v.licensePlate || ''}</p>
                                 <p className="text-[11px] text-gray-400 mt-0.5 line-clamp-1">IMEI: {v.imei}</p>
                             </div>
@@ -108,9 +108,9 @@ export default function VehicleList({ vehicles, onSelectVehicle, selectedVehicle
                             <div className="text-right text-base font-semibold text-gray-700">
                                 {v.fuel || 0}%
                             </div>
-                            <div className="text-right text-sm font-medium text-gray-500 pr-2 block">
+                            {/* <div className="text-right text-sm font-medium text-gray-500 pr-2 block">
                                 {v.coolantTemp || 0}°C
-                            </div>
+                            </div> */}
                         </div>
                     </div>
                 ))}
