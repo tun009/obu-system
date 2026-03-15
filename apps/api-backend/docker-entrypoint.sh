@@ -11,4 +11,4 @@ until npx prisma db push --schema=packages/database/prisma/schema.prisma --skip-
 done
 
 echo "[Entrypoint] DB schema ready. Starting API server..."
-exec node apps/api-backend/src/index.js
+exec node apps/api-backend/src/server.js
