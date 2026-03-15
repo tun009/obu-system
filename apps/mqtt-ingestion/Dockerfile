@@ -3,6 +3,7 @@
 # Build context: root of monorepo
 ####################################
 FROM node:20-alpine
+RUN apk add --no-cache openssl
 WORKDIR /app
 
 COPY . .
