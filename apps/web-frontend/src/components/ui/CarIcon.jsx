@@ -6,7 +6,7 @@ const statusColorMap = {
     STOPPED: "#f59e0b",     // Amber 500 - Dừng xe
     PARKED: "#64748b",      // Slate 500 - Đỗ xe
     LOST_SIGNAL: "#ef4444", // Red 500 - Mất tín hiệu
-    OFFLINE: "#94a3b8",     // Slate 400 - Offline hẳn
+    OFFLINE: "#ef4444",     // Red 500 - Mất tín hiệu
     ONLINE: "#3b82f6",      // Blue 500
 };
 

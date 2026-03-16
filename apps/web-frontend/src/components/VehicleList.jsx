@@ -44,23 +44,23 @@ export default function VehicleList({ vehicles, onSelectVehicle, selectedVehicle
                 {/* Status KPI Blocks */}
                 <div className="grid grid-cols-5 gap-2 mt-4 text-center">
                     <div className="bg-gray-50 rounded-lg p-2 border border-gray-100 cursor-pointer hover:bg-blue-50" onClick={() => setFilter('ALL')}>
-                        <p className="text-sm font-semibold text-gray-500">Tổng xe</p>
+                        <p className="text-[12px] font-semibold text-gray-500">Tổng xe</p>
                         <p className="text-2xl font-bold text-[#335ddc]">{stats.total}</p>
                     </div>
                     <div className="bg-green-50 rounded-lg p-2 border border-green-100 cursor-pointer hover:bg-green-100" onClick={() => setFilter('RUNNING')}>
-                        <p className="text-sm font-semibold text-gray-500 line-clamp-1">Đang chạy</p>
+                        <p className="text-[12px] font-semibold text-gray-500 line-clamp-1">Đang chạy</p>
                         <p className="text-2xl font-bold text-green-600">{stats.running}</p>
                     </div>
                     <div className="bg-orange-50 rounded-lg p-2 border border-orange-100 cursor-pointer hover:bg-orange-100" onClick={() => setFilter('STOPPED')}>
-                        <p className="text-sm font-semibold text-gray-500 line-clamp-1">Dừng xe</p>
+                        <p className="text-[12px] font-semibold text-gray-500 line-clamp-1">Dừng xe</p>
                         <p className="text-2xl font-bold text-orange-500">{stats.stopped}</p>
                     </div>
                     <div className="bg-gray-100/50 rounded-lg p-2 border border-gray-200 cursor-pointer hover:bg-gray-200" onClick={() => setFilter('PARKED')}>
-                        <p className="text-sm font-semibold text-gray-500 line-clamp-1">Đỗ xe</p>
+                        <p className="text-[12px] font-semibold text-gray-500 line-clamp-1">Đỗ xe</p>
                         <p className="text-2xl font-bold text-gray-600">{stats.parked}</p>
                     </div>
                     <div className="bg-red-50 rounded-lg p-2 border border-red-100 cursor-pointer hover:bg-red-100" onClick={() => setFilter('LOST_SIGNAL')}>
-                        <p className="text-sm font-semibold text-gray-500 line-clamp-1">Mất tín</p>
+                        <p className="text-[12px] font-semibold text-gray-500 line-clamp-1">Mất tín hiệu</p>
                         <p className="text-2xl font-bold text-red-500">{stats.lost}</p>
                     </div>
                 </div>
@@ -71,6 +71,7 @@ export default function VehicleList({ vehicles, onSelectVehicle, selectedVehicle
                     <button className={`whitespace-nowrap px-3 py-1 rounded-full text-xs font-medium border ${filter === 'RUNNING' ? 'bg-green-100 text-green-700 border-green-300' : 'text-gray-600 border-gray-200 bg-white hover:bg-gray-50'}`} onClick={() => setFilter('RUNNING')}>Đang chạy</button>
                     <button className={`whitespace-nowrap px-3 py-1 rounded-full text-xs font-medium border ${filter === 'STOPPED' ? 'bg-orange-100 text-orange-700 border-orange-300' : 'text-gray-600 border-gray-200 bg-white hover:bg-gray-50'}`} onClick={() => setFilter('STOPPED')}>Dừng xe</button>
                     <button className={`whitespace-nowrap px-3 py-1 rounded-full text-xs font-medium border ${filter === 'PARKED' ? 'bg-gray-200 text-gray-700 border-gray-400' : 'text-gray-600 border-gray-200 bg-white hover:bg-gray-50'}`} onClick={() => setFilter('PARKED')}>Đỗ xe</button>
+                     <button className={`whitespace-nowrap px-3 py-1 rounded-full text-xs font-medium border ${filter === 'LOST_SIGNAL' ? 'bg-red-200 text-red-700 border-red-400' : 'text-gray-600 border-gray-200 bg-white hover:bg-gray-50'}`} onClick={() => setFilter('LOST_SIGNAL')}>Mất tín hiệu</button>
                 </div>
             </div>
 

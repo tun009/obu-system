@@ -50,7 +50,7 @@ export default function AddVehicleModal({ onClose, editingVehicle }) {
             }
             onClose();
         } catch (e) {
-            alert('Lỗi lưu đối tượng giao thông: ' + e.message);
+            alert('Có lỗi xảy ra: ' + e.message);
         }
     };
 
@@ -86,7 +86,6 @@ export default function AddVehicleModal({ onClose, editingVehicle }) {
                                     value={imei}
                                     onChange={(e) => { setImei(e.target.value); setCheckStatus('idle'); }}
                                     placeholder="Nhập chuỗi IMEI OBU..."
-                                    disabled={isEditMode}
                                     className={`w-full font-mono text-sm shadow-inner transition-colors ${isEditMode ? 'bg-gray-100/70 border-gray-200 text-gray-500 cursor-not-allowed' :
                                         checkStatus === 'success' ? 'border-green-500 bg-green-50/30 focus:border-green-600 focus:ring-green-500/20' :
                                             checkStatus === 'error' ? 'border-red-500 bg-red-50/30 focus:border-red-600 focus:ring-red-500/20' :

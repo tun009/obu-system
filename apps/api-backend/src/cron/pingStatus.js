@@ -38,7 +38,13 @@ cron.schedule('*/3 * * * *', async () => {
             const deadIds = deadVehicles.map(v => v.id);
             await prisma.vehicle.updateMany({
                 where: { id: { in: deadIds } },
-                data: { currentStatus: 'OFFLINE' }
+                data: { 
+                    currentStatus: 'OFFLINE',
+                    speedKmh: 0,
+                    engineRpm: 0,
+                    fuelLevel: 0,
+                    throttle: 0,
+                }
             });
             console.log(`[CRON] Marked ${deadVehicles.length} vehicles as OFFLINE.`);
 

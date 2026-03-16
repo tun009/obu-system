@@ -412,7 +412,7 @@ export default function JourneyHistoryPage() {
                 {/* Right Map View */}
                 <div className="flex-1 bg-gray-100 relative">
                     {/* Top Status Legend - Overlaid on Map */}
-                    <div className="absolute top-4 left-4 z-[400] bg-white/90 backdrop-blur rounded-lg shadow-sm border border-gray-200 p-2.5 flex gap-4 text-xs font-medium text-gray-700">
+                    <div className="absolute top-4 left-12 z-[400] bg-white/90 backdrop-blur rounded-lg shadow-sm border border-gray-200 p-2.5 flex gap-4 text-xs font-medium text-gray-700">
                         <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-green-500"></div> Đang chạy</div>
                         <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-amber-500"></div> Dừng xe</div>
                         <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-gray-500"></div> Đỗ xe</div>
