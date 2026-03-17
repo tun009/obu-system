@@ -40,7 +40,7 @@ model Vehicle {
   
   lastUpdatedAt  DateTime      @default(now()) @updatedAt @map("last_updated_at")
 
-  journeyLogs    JourneyLog[]
+  journeyLogs    JourneyLog[]  @ignore
 
   @@map("vehicles")
 }
