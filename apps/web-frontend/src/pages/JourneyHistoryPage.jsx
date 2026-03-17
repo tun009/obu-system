@@ -16,57 +16,41 @@ const formatDateTimeLocal = (date) => {
     return (new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString()).slice(0, 16);
 };
 
-function JourneyMap({ formattedLogs, zoomToLog }) {
-    const map = useMap();
+const StaticRoute = React.memo(function StaticRoute({ formattedLogs }) {
+    const polylinePositions = useMemo(() => {
+        return (formattedLogs || [])
+            .filter(p => p.lat != null && p.lng != null && !isNaN(p.lat) && !isNaN(p.lng))
+            .map(p => [p.lat, p.lng]);
+    }, [formattedLogs]);
 
-    useEffect(() => {
-        if (zoomToLog && zoomToLog.lat && zoomToLog.lng) {
-            map.flyTo([zoomToLog.lat, zoomToLog.lng], 16, { animate: true });
-        } else if (formattedLogs && formattedLogs.length > 0) {
-            const validPoints = formattedLogs.filter(p => p.lat && p.lng);
-            if (validPoints.length > 0) {
-                const bounds = L.latLngBounds(validPoints.map(s => [s.lat, s.lng]));
-                map.fitBounds(bounds, { padding: [50, 50] });
-            }
-        }
-    }, [zoomToLog, formattedLogs, map]);
+    const { startLog, endLog } = useMemo(() => {
+        const validLogs = (formattedLogs || []).filter(log => log.lat != null && log.lng != null && !isNaN(log.lat) && !isNaN(log.lng));
+        return {
+            startLog: validLogs.length > 0 ? validLogs[0] : null,
+            endLog: validLogs.length > 0 ? validLogs[validLogs.length - 1] : null
+        };
+    }, [formattedLogs]);
 
-    const allPoints = (formattedLogs || [])
-        .filter(p => p.lat != null && p.lng != null && !isNaN(p.lat) && !isNaN(p.lng))
-        .map(p => [p.lat, p.lng]);
-
-    const createLabelIcon = (label, bgColor) => L.divIcon({
+    const startIcon = useMemo(() => L.divIcon({
         className: 'custom-label-marker',
-        html: `<div style="background-color: ${bgColor}; color: white; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3); z-index: 500;">${label}</div>`,
-        iconSize: [24, 24],
-        iconAnchor: [12, 12]
-    });
+        html: `<div style="background-color: #22c55e; color: white; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3); z-index: 500;">S</div>`,
+        iconSize: [24, 24], iconAnchor: [12, 12]
+    }), []);
 
-    const createCarMarker = (status, direction = 0) => {
-        const rawSvg = ReactDOMServer.renderToString(<CarIcon status={status} width={24} height={40} />);
-        return L.divIcon({
-            className: 'custom-car-marker',
-            // iconAnchor [12, 20] đã canh giữa icon (tâm của 24x40) với tọa độ bản đồ.
-            // KHÔNG dùng translateX/translateY trong CSS vì khi kết hợp với rotate(),
-            // các translate sẽ chạy theo trục ĐÃ BỊ XOAY → icon bị trôi xa khỏi tọa độ thực.
-            html: `<div style="transform: rotate(${direction}deg); transform-origin: center center; transition: transform 0.3s ease-out;">${rawSvg}</div>`,
-            iconSize: [24, 40],
-            iconAnchor: [12, 20],
-            popupAnchor: [0, -20]
-        });
-    };
-
-    const validLogs = (formattedLogs || []).filter(log => log.lat != null && log.lng != null && !isNaN(log.lat) && !isNaN(log.lng));
-    const startLog = validLogs.length > 0 ? validLogs[0] : null;
-    const endLog = validLogs.length > 0 ? validLogs[validLogs.length - 1] : null;
+    const endIcon = useMemo(() => L.divIcon({
+        className: 'custom-label-marker',
+        html: `<div style="background-color: #ef4444; color: white; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3); z-index: 500;">E</div>`,
+        iconSize: [24, 24], iconAnchor: [12, 12]
+    }), []);
 
     return (
         <>
-            <Polyline positions={validLogs.map(p => [p.lat, p.lng])} color="#3b82f6" weight={4} opacity={0.8} />
+            {polylinePositions.length > 0 && (
+                <Polyline positions={polylinePositions} color="#3b82f6" weight={4} opacity={0.8} />
+            )}
 
-            {/* Start Marker (Điểm bắt đầu) */}
             {startLog && (
-                <Marker position={[startLog.lat, startLog.lng]} icon={createLabelIcon('S', '#22c55e')} zIndexOffset={800}>
+                <Marker position={[startLog.lat, startLog.lng]} icon={startIcon} zIndexOffset={800}>
                     <Popup className="obu-popup text-sm font-sans">
                         <div className="font-bold text-gray-800 mb-1">Điểm xuất phát</div>
                         <div className="text-gray-500 text-[11px] leading-tight flex flex-col gap-1">
@@ -76,9 +60,8 @@ function JourneyMap({ formattedLogs, zoomToLog }) {
                 </Marker>
             )}
 
-            {/* End Marker (Điểm kết thúc) */}
             {endLog && startLog !== endLog && (
-                <Marker position={[endLog.lat, endLog.lng]} icon={createLabelIcon('E', '#ef4444')} zIndexOffset={800}>
+                <Marker position={[endLog.lat, endLog.lng]} icon={endIcon} zIndexOffset={800}>
                     <Popup className="obu-popup text-sm font-sans">
                         <div className="font-bold text-gray-800 mb-1">Điểm kết thúc</div>
                         <div className="text-gray-500 text-[11px] leading-tight flex flex-col gap-1">
@@ -87,23 +70,73 @@ function JourneyMap({ formattedLogs, zoomToLog }) {
                     </Popup>
                 </Marker>
             )}
+        </>
+    );
+});
 
-            {/* Highlight Selected Hover Log */}
-            {zoomToLog && zoomToLog.lat != null && zoomToLog.lng != null && !isNaN(zoomToLog.lat) && !isNaN(zoomToLog.lng) && (
-                <Marker
-                    position={[zoomToLog.lat, zoomToLog.lng]}
-                    icon={createCarMarker(zoomToLog.status, zoomToLog.direction)}
-                    zIndexOffset={1000}
-                >
-                    <Popup className="obu-popup text-sm font-sans" autoPan={false}>
-                        <div className="font-bold text-gray-800 mb-1">{zoomToLog.status === 'RUNNING' ? 'Đang chạy' : zoomToLog.status === 'STOPPED' ? 'Dừng xe' : 'Đỗ xe'}</div>
-                        <div className="text-gray-600 text-xs mb-0.5">Vận tốc: {Math.round(zoomToLog.speed || 0)} km/h</div>
-                        <div className="text-gray-500 text-[11px] leading-tight">
-                            Báo cáo: {zoomToLog.date.toLocaleDateString('en-GB')} {zoomToLog.date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
-                        </div>
-                    </Popup>
-                </Marker>
-            )}
+function MapPanner({ formattedLogs, zoomToLog }) {
+    const map = useMap();
+    const isInitialized = useRef(false);
+
+    useEffect(() => {
+        if (formattedLogs && formattedLogs.length > 0) {
+            const validPoints = formattedLogs.filter(p => p.lat && p.lng);
+            if (validPoints.length > 0) {
+                const bounds = L.latLngBounds(validPoints.map(s => [s.lat, s.lng]));
+                map.fitBounds(bounds, { padding: [50, 50] });
+                isInitialized.current = true;
+            }
+        }
+    }, [formattedLogs, map]);
+
+    useEffect(() => {
+        if (zoomToLog && zoomToLog.lat != null && zoomToLog.lng != null) {
+            map.panTo([zoomToLog.lat, zoomToLog.lng], { animate: true, duration: 0.25 });
+        }
+    }, [zoomToLog, map]);
+
+    return null;
+}
+
+function CarCursor({ zoomToLog }) {
+    const createCarMarker = (status, direction = 0) => {
+        const rawSvg = ReactDOMServer.renderToString(<CarIcon status={status} width={24} height={40} />);
+        return L.divIcon({
+            className: 'custom-car-marker',
+            html: `<div style="transform: rotate(${direction}deg); transform-origin: center center; transition: transform 0.3s ease-out;">${rawSvg}</div>`,
+            iconSize: [24, 40],
+            iconAnchor: [12, 20],
+            popupAnchor: [0, -20]
+        });
+    };
+
+    if (!zoomToLog || zoomToLog.lat == null || zoomToLog.lng == null || isNaN(zoomToLog.lat) || isNaN(zoomToLog.lng)) {
+        return null;
+    }
+
+    return (
+        <Marker
+            position={[zoomToLog.lat, zoomToLog.lng]}
+            icon={createCarMarker(zoomToLog.status, zoomToLog.direction)}
+            zIndexOffset={1000}
+        >
+            <Popup className="obu-popup text-sm font-sans" autoPan={false}>
+                <div className="font-bold text-gray-800 mb-1">{zoomToLog.status === 'RUNNING' ? 'Đang chạy' : zoomToLog.status === 'STOPPED' ? 'Dừng xe' : 'Đỗ xe'}</div>
+                <div className="text-gray-600 text-xs mb-0.5">Vận tốc: {Math.round(zoomToLog.speed || 0)} km/h</div>
+                <div className="text-gray-500 text-[11px] leading-tight">
+                    Báo cáo: {zoomToLog.date.toLocaleDateString('en-GB')} {zoomToLog.date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                </div>
+            </Popup>
+        </Marker>
+    );
+}
+
+function JourneyMap({ formattedLogs, zoomToLog }) {
+    return (
+        <>
+            <StaticRoute formattedLogs={formattedLogs} />
+            <MapPanner formattedLogs={formattedLogs} zoomToLog={zoomToLog} />
+            <CarCursor zoomToLog={zoomToLog} />
         </>
     );
 }

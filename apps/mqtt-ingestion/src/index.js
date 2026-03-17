@@ -52,7 +52,11 @@ mqttClient.on('message', async (topic, message) => {
 
     let longitude = parseFloat(payload.long);
     let latitude = parseFloat(payload.lat);
-    let speed = parseFloat(payload.speed) || 0; // Lấy speed từ thiết bị OBU thay vì thông số taplo
+    // Ưu tiên car_speed (OBD/taplo) vì chính xác hơn, không phụ thuộc GPS
+    // Fallback sang speed (GPS) nếu car_speed không có
+    const carSpeed = parseFloat(payload.car_speed);
+    const gpsSpeed = parseFloat(payload.speed);
+    let speed = !isNaN(carSpeed) && carSpeed > 0 ? carSpeed : (!isNaN(gpsSpeed) ? gpsSpeed : 0);
     const rpm = parseInt(payload.car_rpm) || 0;
     const fuel = parseFloat(payload.car_fuel_level) || 0;
     const coolantTemp = parseFloat(payload.car_coolant_temp) || 0;

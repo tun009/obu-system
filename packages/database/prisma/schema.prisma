@@ -46,8 +46,8 @@ model Vehicle {
 }
 
 model JourneyLog {
-  // Dùng BigInt vì bảng này có thể lên tới tỷ bản ghi
-  id            BigInt        @id @default(autoincrement())
+  // TimescaleDB hypertable — không dùng @id vì PK quản lý bằng migration SQL
+  // Hypertable tự động partition theo timestamp (1 chunk/ngày)
   timestamp     DateTime      @default(now())
   
   vehicleId     Int           @map("vehicle_id")
@@ -65,6 +65,7 @@ model JourneyLog {
   engineStatus  Boolean?      @map("engine_status")
 
   @@index([timestamp])
-  @@index([vehicleId, timestamp]) // Index tối ưu cho việc quét lại hành trình 1 xe
+  @@index([vehicleId, timestamp])
   @@map("journey_logs")
+  @@ignore // Prisma không quản lý PK trực tiếp — dùng raw SQL migration
 }

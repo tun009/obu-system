@@ -3,7 +3,7 @@ version: '3.8'
 services:
   # ── Database ────────────────────────────────────
   postgres:
-    image: postgis/postgis:15-3.4
+    image: timescale/timescaledb-ha:pg15-latest
     container_name: obu-postgres
     restart: always
     environment:
@@ -11,7 +11,9 @@ services:
       POSTGRES_PASSWORD: ${DB_PASSWORD}
       POSTGRES_DB: ${DB_NAME}
     volumes:
-      - pgdata:/var/lib/postgresql/data
+      - pgdata_ts:/home/postgres/pgdata
+    # ports:
+    #   - "5432:5432"  # Chỉ bật khi dev local (npm run dev)
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
       interval: 5s
@@ -78,5 +80,5 @@ services:
       - api
 
 volumes:
-  pgdata:
+  pgdata_ts:
   redisdata:
