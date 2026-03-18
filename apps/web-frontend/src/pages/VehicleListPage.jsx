@@ -51,7 +51,7 @@ export default function VehicleListPage() {
             i + 1, v.licensePlate || '', v.type || '', `\t${v.imei || ''}`,
             statusMap[v.status] || v.status || ''
         ]);
-        
+
         const csvContent = '\uFEFF' + [headers, ...rows].map(r => r.map(c => `"${c}"`).join(',')).join('\n');
         const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
         const url = URL.createObjectURL(blob);
@@ -75,7 +75,7 @@ export default function VehicleListPage() {
                             <Input
                                 value={searchTerm}
                                 onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
-                                placeholder="Tìm kiếm biển số xe, emei,..."
+                                placeholder="Tìm kiếm biển số xe, imei,..."
                                 className="pl-9 h-10 w-full bg-white border-gray-200 focus:ring-2 focus:ring-[#284ba5]/20"
                             />
                         </div>

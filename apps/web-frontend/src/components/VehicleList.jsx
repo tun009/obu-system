@@ -14,6 +14,7 @@ export default function VehicleList({ vehicles, onSelectVehicle, selectedVehicle
         parked: vehicles.filter(v => v.status === 'PARKED').length,
         engineOn: vehicles.filter(v => v.status === 'RUNNING' || v.status === 'STOPPED').length,
         engineOff: vehicles.filter(v => v.status === 'PARKED' || v.status === 'LOST_SIGNAL' || v.status === 'OFFLINE').length,
+        lost: vehicles.filter(v => v.status === 'LOST_SIGNAL' || v.status === 'OFFLINE').length,
     };
 
     const filteredVehicles = vehicles
@@ -22,6 +23,7 @@ export default function VehicleList({ vehicles, onSelectVehicle, selectedVehicle
             if (filter === 'ALL') return true;
             if (filter === 'ENGINE_ON') return v.status === 'RUNNING' || v.status === 'STOPPED';
             if (filter === 'ENGINE_OFF') return v.status === 'PARKED' || v.status === 'LOST_SIGNAL' || v.status === 'OFFLINE';
+            if (filter === 'LOST_SIGNAL') return v.status === 'LOST_SIGNAL' || v.status === 'OFFLINE';
             return v.status === filter;
         });
 
@@ -38,7 +40,7 @@ export default function VehicleList({ vehicles, onSelectVehicle, selectedVehicle
                         <Input
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            placeholder="Tìm kiếm biển số xe, tải xế,..."
+                            placeholder="Tìm kiếm biển số xe, imei,..."
                             className="pl-9 h-10 w-full bg-gray-50 border-gray-200 shadow-sm"
                         />
                     </div>
@@ -62,9 +64,9 @@ export default function VehicleList({ vehicles, onSelectVehicle, selectedVehicle
                         <p className="text-[12px] font-semibold text-gray-500 line-clamp-1">Đỗ xe</p>
                         <p className="text-2xl font-bold text-gray-600">{stats.parked}</p>
                     </div>
-                    <div className="bg-red-50 rounded-lg p-2 border border-red-100 cursor-pointer hover:bg-red-100" onClick={() => setFilter('ENGINE_OFF')}>
+                    <div className="bg-red-50 rounded-lg p-2 border border-red-100 cursor-pointer hover:bg-red-100" onClick={() => setFilter('LOST_SIGNAL')}>
                         <p className="text-[12px] font-semibold text-gray-500 line-clamp-1">Mất tín hiệu</p>
-                        <p className="text-2xl font-bold text-red-500">{stats.engineOff}</p>
+                        <p className="text-2xl font-bold text-red-500">{stats.lost}</p>
                     </div>
                 </div>
 
@@ -74,23 +76,27 @@ export default function VehicleList({ vehicles, onSelectVehicle, selectedVehicle
                     <button className={`whitespace-nowrap px-3 py-1 rounded-full text-xs font-medium border ${filter === 'RUNNING' ? 'bg-green-100 text-green-700 border-green-300' : 'text-gray-600 border-gray-200 bg-white hover:bg-gray-50'}`} onClick={() => setFilter('RUNNING')}>Đang chạy</button>
                     <button className={`whitespace-nowrap px-3 py-1 rounded-full text-xs font-medium border ${filter === 'STOPPED' ? 'bg-orange-100 text-orange-700 border-orange-300' : 'text-gray-600 border-gray-200 bg-white hover:bg-gray-50'}`} onClick={() => setFilter('STOPPED')}>Dừng xe</button>
                     <button className={`whitespace-nowrap px-3 py-1 rounded-full text-xs font-medium border ${filter === 'PARKED' ? 'bg-gray-200 text-gray-700 border-gray-400' : 'text-gray-600 border-gray-200 bg-white hover:bg-gray-50'}`} onClick={() => setFilter('PARKED')}>Đỗ xe</button>
-                    <button className={`whitespace-nowrap px-3 py-1 rounded-full text-xs font-medium border ${filter === 'ENGINE_ON' ? 'bg-emerald-100 text-emerald-700 border-emerald-300' : 'text-gray-600 border-gray-200 bg-white hover:bg-gray-50'}`} onClick={() => setFilter('ENGINE_ON')}>Nổ máy</button>
+                    <button className={`whitespace-nowrap px-3 py-1 rounded-full text-xs font-medium border ${filter === 'ENGINE_ON' ? 'bg-blue-100 text-blue-700 border-blue-300' : 'text-gray-600 border-gray-200 bg-white hover:bg-gray-50'}`} onClick={() => setFilter('ENGINE_ON')}>Nổ máy</button>
                     <button className={`whitespace-nowrap px-3 py-1 rounded-full text-xs font-medium border ${filter === 'ENGINE_OFF' ? 'bg-red-100 text-red-700 border-red-300' : 'text-gray-600 border-gray-200 bg-white hover:bg-gray-50'}`} onClick={() => setFilter('ENGINE_OFF')}>Tắt máy</button>
                 </div>
             </div>
 
             {/* List Header Table-style */}
-            <div className="grid grid-cols-6 gap-2 px-5 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider bg-gray-50/50">
+            <div className="grid grid-cols-7 gap-2 px-5 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider bg-gray-50/50">
                 <div className="col-span-3">Biển số</div>
                 <div className="col-span-2 text-center">Trạng thái</div>
-                <div className="text-right">Km/h</div>
-                {/* <div className="text-right">N.liệu</div> */}
-                {/* <div className="text-right pr-2">N.Độ</div> */}
+                <div className="text-center ">Km/h</div>
+                <div className="text-center">Engine</div>
             </div>
 
             {/* Vehicle Rows */}
             <div className="flex-1 overflow-y-auto w-full pb-4">
-                {filteredVehicles.map((v) => (
+                {filteredVehicles.map((v) => {
+                    const isEngineOn = v.status === 'RUNNING' || v.status === 'STOPPED';
+                    const lastUpdateStr = v.lastUpdate
+                        ? new Date(v.lastUpdate).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
+                        : '';
+                    return (
                     <div
                         key={v.imei}
                         onClick={() => onSelectVehicle(v)}
@@ -99,26 +105,29 @@ export default function VehicleList({ vehicles, onSelectVehicle, selectedVehicle
                             ${selectedVehicleId === v.imei ? 'bg-blue-50 border-l-4 border-l-[#335ddc]' : 'hover:bg-gray-50 border-l-4 border-l-transparent'}
                         `}
                     >
-                        <div className="grid grid-cols-6 gap-2 items-center">
+                        <div className="grid grid-cols-7 gap-2 items-center">
                             <div className="col-span-3">
                                 <p className="font-bold text-gray-800 text-base line-clamp-1">{v.licensePlate || ''}</p>
-                                <p className="text-[11px] text-gray-400 mt-0.5 line-clamp-1">IMEI: {v.imei}</p>
                             </div>
                             <div className="col-span-2 flex justify-center">
                                 <Badge status={v.status} className="scale-95 origin-center" />
                             </div>
-                            <div className="text-right text-base font-semibold text-gray-700">
+                            <div className="text-center text-base font-semibold text-gray-700">
                                 {Math.round(v.speed || 0)}
                             </div>
-                            {/* <div className="text-right text-base font-semibold text-gray-700">
-                                {v.fuel || 0}%
-                            </div> */}
-                            {/* <div className="text-right text-sm font-medium text-gray-500 pr-2 block">
-                                {v.coolantTemp || 0}°C
-                            </div> */}
+                            <div className="text-center">
+                                <span className={`text-xs font-semibold ${isEngineOn ? 'text-green-700' : 'text-gray-500'}`}>
+                                    {isEngineOn ? 'On' : 'Off'}
+                                </span>
+                            </div>
                         </div>
+                        <p className="text-[11px] text-gray-400 mt-1 line-clamp-1">
+                            {v.lat && v.lng ? `Lat ${Number(v.lat).toFixed(3)}..., Long ${Number(v.lng).toFixed(3)}...` : `IMEI: ${v.imei}`}
+                            {lastUpdateStr && <span> · Update {lastUpdateStr}</span>}
+                        </p>
                     </div>
-                ))}
+                    );
+                })}
 
                 {filteredVehicles.length === 0 && (
                     <div className="p-8 text-center bg-gray-50 h-full">
