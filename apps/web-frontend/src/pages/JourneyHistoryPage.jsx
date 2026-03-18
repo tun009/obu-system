@@ -5,16 +5,35 @@ import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from 'react-
 import L from 'leaflet';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
-import { FileSpreadsheet, Play, Pause, FastForward, SkipBack, SkipForward } from 'lucide-react';
+import { FileSpreadsheet, Play, Pause, FastForward, SkipBack, SkipForward, Search, X } from 'lucide-react';
 import { formatJourneyData } from '../utils/journeyFormatter';
 import ReactDOMServer from 'react-dom/server';
 import CarIcon from '../components/ui/CarIcon';
-import DatePicker from 'react-datepicker';
 
-// Format Date to YYYY-MM-DDTHH:mm string for datetime-local input
 const formatDateTimeLocal = (date) => {
     return (new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString()).slice(0, 16);
 };
+
+const STATUS_LEGEND = [
+    { key: 'RUNNING',     label: 'Đang chạy', color: '#10b981' },
+    { key: 'STOPPED',     label: 'Dừng xe',    color: '#f59e0b' },
+    { key: 'PARKED',      label: 'Đỗ xe',      color: '#64748b' },
+    { key: 'OFFLINE',     label: 'Mất tín hiệu', color: '#ef4444' },
+];
+
+function LegendCarIcon({ status }) {
+    return <CarIcon status={status} width={16} height={26} style={{ display: 'inline-block', verticalAlign: 'middle' }} />;
+}
+
+function MapSearchFlyTo({ searchCoords }) {
+    const map = useMap();
+    useEffect(() => {
+        if (searchCoords) {
+            map.flyTo([searchCoords.lat, searchCoords.lng], 16, { animate: true, duration: 1.5 });
+        }
+    }, [searchCoords, map]);
+    return null;
+}
 
 const StaticRoute = React.memo(function StaticRoute({ formattedLogs }) {
     const polylinePositions = useMemo(() => {
@@ -131,12 +150,13 @@ function CarCursor({ zoomToLog }) {
     );
 }
 
-function JourneyMap({ formattedLogs, zoomToLog }) {
+function JourneyMap({ formattedLogs, zoomToLog, searchCoords }) {
     return (
         <>
             <StaticRoute formattedLogs={formattedLogs} />
             <MapPanner formattedLogs={formattedLogs} zoomToLog={zoomToLog} />
             <CarCursor zoomToLog={zoomToLog} />
+            <MapSearchFlyTo searchCoords={searchCoords} />
         </>
     );
 }
@@ -157,7 +177,6 @@ export default function JourneyHistoryPage() {
     const [statusFilter, setStatusFilter] = useState('ALL'); // ALL, RUNNING, STOPPED, PARKED
     const [hoveredLog, setHoveredLog] = useState(null);
 
-    // #8: Lazy load — chỉ render visibleCount dòng, tăng khi scroll tới cuối
     const LOAD_STEP = 100;
     const [visibleCount, setVisibleCount] = useState(LOAD_STEP);
     const sentinelRef = useRef(null);
@@ -166,6 +185,45 @@ export default function JourneyHistoryPage() {
     const [isPlaying, setIsPlaying] = useState(false);
     const [playbackIndex, setPlaybackIndex] = useState(0);
     const [playbackSpeed, setPlaybackSpeed] = useState(1); // 1x, 2x, 5x, 10x
+
+    const [mapSearchQuery, setMapSearchQuery] = useState('');
+    const [mapSearchResults, setMapSearchResults] = useState([]);
+    const [mapSearchCoords, setMapSearchCoords] = useState(null);
+    const [isMapSearching, setIsMapSearching] = useState(false);
+    const [showMapDropdown, setShowMapDropdown] = useState(false);
+    const mapSearchTimeout = useRef(null);
+    const mapSearchRef = useRef(null);
+
+    const handleMapSearchChange = (e) => {
+        const value = e.target.value;
+        setMapSearchQuery(value);
+        if (mapSearchTimeout.current) clearTimeout(mapSearchTimeout.current);
+        if (value.trim().length < 2) { setMapSearchResults([]); setShowMapDropdown(false); return; }
+        mapSearchTimeout.current = setTimeout(async () => {
+            setIsMapSearching(true);
+            try {
+                const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(value)}&limit=5&countrycodes=vn&accept-language=vi`);
+                const data = await res.json();
+                setMapSearchResults(data);
+                setShowMapDropdown(data.length > 0);
+            } catch (err) { console.error('Search error:', err); }
+            finally { setIsMapSearching(false); }
+        }, 500);
+    };
+
+    const handleMapSelectResult = (result) => {
+        setMapSearchCoords({ lat: parseFloat(result.lat), lng: parseFloat(result.lon) });
+        setMapSearchQuery(result.display_name.split(',').slice(0, 2).join(', '));
+        setShowMapDropdown(false);
+    };
+
+    const clearMapSearch = () => { setMapSearchQuery(''); setMapSearchResults([]); setShowMapDropdown(false); setMapSearchCoords(null); };
+
+    useEffect(() => {
+        const handleClickOutside = (e) => { if (mapSearchRef.current && !mapSearchRef.current.contains(e.target)) setShowMapDropdown(false); };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
 
     // Initial select first vehicle
     useEffect(() => {
@@ -227,10 +285,8 @@ export default function JourneyHistoryPage() {
         return formattedData.logs.filter(s => s.status === statusFilter);
     }, [formattedData.logs, statusFilter]);
 
-    // #8: Reset visibleCount mỗi khi filteredLogs thay đổi (search mới)
     useEffect(() => { setVisibleCount(LOAD_STEP); }, [filteredLogs]);
 
-    // #8: IntersectionObserver — load thêm khi sentinel hậu hiện trong viewport
     useEffect(() => {
         const sentinel = sentinelRef.current;
         if (!sentinel) return;
@@ -293,8 +349,9 @@ export default function JourneyHistoryPage() {
 
 
     return (
-        <div className="flex h-screen bg-gray-50 flex-col overflow-hidden">
-            <div className="flex flex-1 overflow-hidden">
+        
+        <div className="flex flex-col h-full bg-[#f3f4f6] p-4 overflow-hidden">
+            <div className="flex flex-1 overflow-hidden rounded-xl shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] border border-gray-200">
                 {/* Left Sidebar Layout */}
                 <div className="w-[550px] bg-white border-r border-gray-200 flex flex-col shrink-0 shadow-sm z-[5]">
 
@@ -420,14 +477,15 @@ export default function JourneyHistoryPage() {
                                                     <span>RPM: {log.rpm}</span>
                                                     <span>Temp: {log.coolantTemp || 0}°C</span>
                                                     <span>Throttle: {log.throttle || 0}%</span>
+                                                    <span>Speed: {Math.round(log.speed || 0)} km/h</span>
                                                 </div>
                                             </div>
-                                            <div className="text-right shrink-0">
+                                            {/* <div className="text-right shrink-0">
                                                 <div className="text-xs font-bold text-gray-700 mb-1 leading-tight">
                                                     {Math.round(log.speed || 0)} km/h
                                                 </div>
                                                 <div className="text-xs text-gray-400">Fuel {log.fuel || 0}%</div>
-                                            </div>
+                                            </div> */}
                                         </div>
                                     </div>
                                 ))}
@@ -444,12 +502,58 @@ export default function JourneyHistoryPage() {
 
                 {/* Right Map View */}
                 <div className="flex-1 bg-gray-100 relative">
-                    {/* Top Status Legend - Overlaid on Map */}
-                    <div className="absolute top-4 left-12 z-[400] bg-white/90 backdrop-blur rounded-lg shadow-sm border border-gray-200 p-2.5 flex gap-4 text-xs font-medium text-gray-700">
-                        <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-green-500"></div> Đang chạy</div>
-                        <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-amber-500"></div> Dừng xe</div>
-                        <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-gray-500"></div> Đỗ xe</div>
-                        <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-red-400"></div> Mất tín hiệu</div>
+                    {/* Map Toolbar: Legend + Search (same style as MapDashboard) */}
+                    <div className="absolute top-3 left-14 right-4 z-[1000] flex items-center justify-between px-4 py-2 bg-white/90 backdrop-blur-sm rounded-xl shadow-lg border border-gray-200/60 gap-5">
+                        {/* Status Legend */}
+                        <div className="flex items-center gap-5 flex-shrink-0">
+                            {STATUS_LEGEND.map(s => (
+                                <div key={s.key} className="flex items-center gap-1.5">
+                                    <LegendCarIcon status={s.key} />
+                                    <span className="text-xs font-medium text-gray-600 whitespace-nowrap">{s.label}</span>
+                                </div>
+                            ))}
+                        </div>
+
+                        {/* Search Bar */}
+                        <div className="relative flex-1 min-w-[300px] max-w-[500px]" ref={mapSearchRef}>
+                            <div className="relative">
+                                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                                <input
+                                    type="text"
+                                    placeholder="Tìm kiếm trên bản đồ..."
+                                    value={mapSearchQuery}
+                                    onChange={handleMapSearchChange}
+                                    onFocus={() => mapSearchResults.length > 0 && setShowMapDropdown(true)}
+                                    className="w-full pl-8 pr-8 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent bg-gray-50 placeholder-gray-400"
+                                />
+                                {mapSearchQuery && (
+                                    <button onClick={clearMapSearch} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                                        <X className="w-4 h-4" />
+                                    </button>
+                                )}
+                            </div>
+
+                            {showMapDropdown && (
+                                <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-[9999] max-h-[200px] overflow-y-auto">
+                                    {mapSearchResults.map((r, idx) => (
+                                        <button
+                                            key={idx}
+                                            onClick={() => handleMapSelectResult(r)}
+                                            className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-blue-50 border-b border-gray-100 last:border-0 transition-colors"
+                                        >
+                                            <span className="font-medium">{r.display_name.split(',')[0]}</span>
+                                            <span className="text-gray-400 text-xs block truncate">{r.display_name}</span>
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
+
+                            {isMapSearching && (
+                                <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-[9999] p-3 text-center text-sm text-gray-400">
+                                    Đang tìm kiếm...
+                                </div>
+                            )}
+                        </div>
                     </div>
 
                     <MapContainer center={[21.029754, 105.781992]} zoom={13} style={{ height: '100%', width: '100%', zIndex: 0 }}>
@@ -457,7 +561,7 @@ export default function JourneyHistoryPage() {
                             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                             attribution='&copy; OpenStreetMap contributors'
                         />
-                        <JourneyMap formattedLogs={filteredLogs} zoomToLog={hoveredLog} />
+                        <JourneyMap formattedLogs={filteredLogs} zoomToLog={hoveredLog} searchCoords={mapSearchCoords} />
                     </MapContainer>
 
                     {/* Floating Playback Widget */}

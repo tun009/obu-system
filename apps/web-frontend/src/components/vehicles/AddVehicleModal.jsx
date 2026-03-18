@@ -79,14 +79,14 @@ export default function AddVehicleModal({ onClose, editingVehicle }) {
                     </div>
 
                     <div className="mb-6">
-                        <label className="block text-sm font-semibold text-gray-700 mb-1.5">IMEI thiết bị <span className="text-red-500">*</span></label>
+                        <label className="block text-sm font-semibold text-gray-700 mb-1.5">IMEI thiết bị</label>
                         <div className="flex gap-3">
                             <div className="flex-1 relative">
                                 <Input
                                     value={imei}
                                     onChange={(e) => { setImei(e.target.value); setCheckStatus('idle'); }}
-                                    placeholder="Nhập chuỗi IMEI OBU..."
-                                    className={`w-full font-mono text-sm shadow-inner transition-colors ${isEditMode ? 'bg-gray-100/70 border-gray-200 text-gray-500 cursor-not-allowed' :
+                                    placeholder="Nhập chuỗi IMEI thiết bị..."
+                                    className={`w-full text-gray-700 transition-colors ${isEditMode ? '' :
                                         checkStatus === 'success' ? 'border-green-500 bg-green-50/30 focus:border-green-600 focus:ring-green-500/20' :
                                             checkStatus === 'error' ? 'border-red-500 bg-red-50/30 focus:border-red-600 focus:ring-red-500/20' :
                                                 'bg-gray-50/50'

@@ -246,10 +246,10 @@ export default function MapDashboard({ vehicles, selectedVehicle }) {
                                                 <p className="text-gray-500 text-xs">Engine</p>
                                                 <p className="font-medium">{v.rpm > 0 ? 'ON' : 'OFF'}</p>
                                             </div>
-                                            <div>
+                                            {/* <div>
                                                 <p className="text-gray-500 text-xs">Fuel</p>
                                                 <p className="font-medium text-red-600">{v.fuel || 0}%</p>
-                                            </div>
+                                            </div> */}
                                             <div>
                                                 <p className="text-gray-500 text-xs">Coolant</p>
                                                 <p className="font-medium">{v.coolantTemp || 0}°C</p>

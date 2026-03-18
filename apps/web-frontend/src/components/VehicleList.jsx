@@ -5,19 +5,25 @@ import Button from './ui/Button';
 
 export default function VehicleList({ vehicles, onSelectVehicle, selectedVehicleId }) {
     const [searchTerm, setSearchTerm] = useState('');
-    const [filter, setFilter] = useState('ALL'); // ALL, RUNNING, STOPPED, PARKED, LOST_SIGNAL
+    const [filter, setFilter] = useState('ALL'); // ALL, RUNNING, STOPPED, PARKED, ENGINE_ON, ENGINE_OFF
 
     const stats = {
         total: vehicles.length,
         running: vehicles.filter(v => v.status === 'RUNNING').length,
         stopped: vehicles.filter(v => v.status === 'STOPPED').length,
         parked: vehicles.filter(v => v.status === 'PARKED').length,
-        lost: vehicles.filter(v => v.status === 'LOST_SIGNAL' || v.status === 'OFFLINE').length,
+        engineOn: vehicles.filter(v => v.status === 'RUNNING' || v.status === 'STOPPED').length,
+        engineOff: vehicles.filter(v => v.status === 'PARKED' || v.status === 'LOST_SIGNAL' || v.status === 'OFFLINE').length,
     };
 
     const filteredVehicles = vehicles
         .filter(v => v.licensePlate?.toLowerCase().includes(searchTerm.toLowerCase()) || v.imei?.includes(searchTerm))
-        .filter(v => filter === 'ALL' ? true : (filter === 'LOST_SIGNAL' ? (v.status === 'LOST_SIGNAL' || v.status === 'OFFLINE') : v.status === filter));
+        .filter(v => {
+            if (filter === 'ALL') return true;
+            if (filter === 'ENGINE_ON') return v.status === 'RUNNING' || v.status === 'STOPPED';
+            if (filter === 'ENGINE_OFF') return v.status === 'PARKED' || v.status === 'LOST_SIGNAL' || v.status === 'OFFLINE';
+            return v.status === filter;
+        });
 
     return (
         <div className="flex flex-col h-full bg-white border-r border-gray-200">
@@ -36,9 +42,6 @@ export default function VehicleList({ vehicles, onSelectVehicle, selectedVehicle
                             className="pl-9 h-10 w-full bg-gray-50 border-gray-200 shadow-sm"
                         />
                     </div>
-                    {/* <Button variant="outline" className="h-10 px-3 w-10 text-gray-500">
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path></svg>
-                    </Button> */}
                 </div>
 
                 {/* Status KPI Blocks */}
@@ -59,9 +62,9 @@ export default function VehicleList({ vehicles, onSelectVehicle, selectedVehicle
                         <p className="text-[12px] font-semibold text-gray-500 line-clamp-1">Đỗ xe</p>
                         <p className="text-2xl font-bold text-gray-600">{stats.parked}</p>
                     </div>
-                    <div className="bg-red-50 rounded-lg p-2 border border-red-100 cursor-pointer hover:bg-red-100" onClick={() => setFilter('LOST_SIGNAL')}>
+                    <div className="bg-red-50 rounded-lg p-2 border border-red-100 cursor-pointer hover:bg-red-100" onClick={() => setFilter('ENGINE_OFF')}>
                         <p className="text-[12px] font-semibold text-gray-500 line-clamp-1">Mất tín hiệu</p>
-                        <p className="text-2xl font-bold text-red-500">{stats.lost}</p>
+                        <p className="text-2xl font-bold text-red-500">{stats.engineOff}</p>
                     </div>
                 </div>
 
@@ -71,16 +74,17 @@ export default function VehicleList({ vehicles, onSelectVehicle, selectedVehicle
                     <button className={`whitespace-nowrap px-3 py-1 rounded-full text-xs font-medium border ${filter === 'RUNNING' ? 'bg-green-100 text-green-700 border-green-300' : 'text-gray-600 border-gray-200 bg-white hover:bg-gray-50'}`} onClick={() => setFilter('RUNNING')}>Đang chạy</button>
                     <button className={`whitespace-nowrap px-3 py-1 rounded-full text-xs font-medium border ${filter === 'STOPPED' ? 'bg-orange-100 text-orange-700 border-orange-300' : 'text-gray-600 border-gray-200 bg-white hover:bg-gray-50'}`} onClick={() => setFilter('STOPPED')}>Dừng xe</button>
                     <button className={`whitespace-nowrap px-3 py-1 rounded-full text-xs font-medium border ${filter === 'PARKED' ? 'bg-gray-200 text-gray-700 border-gray-400' : 'text-gray-600 border-gray-200 bg-white hover:bg-gray-50'}`} onClick={() => setFilter('PARKED')}>Đỗ xe</button>
-                     <button className={`whitespace-nowrap px-3 py-1 rounded-full text-xs font-medium border ${filter === 'LOST_SIGNAL' ? 'bg-red-200 text-red-700 border-red-400' : 'text-gray-600 border-gray-200 bg-white hover:bg-gray-50'}`} onClick={() => setFilter('LOST_SIGNAL')}>Mất tín hiệu</button>
+                    <button className={`whitespace-nowrap px-3 py-1 rounded-full text-xs font-medium border ${filter === 'ENGINE_ON' ? 'bg-emerald-100 text-emerald-700 border-emerald-300' : 'text-gray-600 border-gray-200 bg-white hover:bg-gray-50'}`} onClick={() => setFilter('ENGINE_ON')}>Nổ máy</button>
+                    <button className={`whitespace-nowrap px-3 py-1 rounded-full text-xs font-medium border ${filter === 'ENGINE_OFF' ? 'bg-red-100 text-red-700 border-red-300' : 'text-gray-600 border-gray-200 bg-white hover:bg-gray-50'}`} onClick={() => setFilter('ENGINE_OFF')}>Tắt máy</button>
                 </div>
             </div>
 
             {/* List Header Table-style */}
-            <div className="grid grid-cols-7 gap-2 px-5 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider bg-gray-50/50">
+            <div className="grid grid-cols-6 gap-2 px-5 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider bg-gray-50/50">
                 <div className="col-span-3">Biển số</div>
                 <div className="col-span-2 text-center">Trạng thái</div>
                 <div className="text-right">Km/h</div>
-                <div className="text-right">N.liệu</div>
+                {/* <div className="text-right">N.liệu</div> */}
                 {/* <div className="text-right pr-2">N.Độ</div> */}
             </div>
 
@@ -95,7 +99,7 @@ export default function VehicleList({ vehicles, onSelectVehicle, selectedVehicle
                             ${selectedVehicleId === v.imei ? 'bg-blue-50 border-l-4 border-l-[#335ddc]' : 'hover:bg-gray-50 border-l-4 border-l-transparent'}
                         `}
                     >
-                        <div className="grid grid-cols-7 gap-2 items-center">
+                        <div className="grid grid-cols-6 gap-2 items-center">
                             <div className="col-span-3">
                                 <p className="font-bold text-gray-800 text-base line-clamp-1">{v.licensePlate || ''}</p>
                                 <p className="text-[11px] text-gray-400 mt-0.5 line-clamp-1">IMEI: {v.imei}</p>
@@ -106,9 +110,9 @@ export default function VehicleList({ vehicles, onSelectVehicle, selectedVehicle
                             <div className="text-right text-base font-semibold text-gray-700">
                                 {Math.round(v.speed || 0)}
                             </div>
-                            <div className="text-right text-base font-semibold text-gray-700">
+                            {/* <div className="text-right text-base font-semibold text-gray-700">
                                 {v.fuel || 0}%
-                            </div>
+                            </div> */}
                             {/* <div className="text-right text-sm font-medium text-gray-500 pr-2 block">
                                 {v.coolantTemp || 0}°C
                             </div> */}

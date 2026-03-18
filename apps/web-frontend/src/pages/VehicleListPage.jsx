@@ -44,8 +44,26 @@ export default function VehicleListPage() {
     const currentItems = filteredVehicles.slice(indexOfFirstItem, indexOfLastItem);
     const totalPages = Math.ceil(filteredVehicles.length / itemsPerPage);
 
+    const exportToExcel = () => {
+        const statusMap = { RUNNING: 'Đang chạy', STOPPED: 'Dừng (nổ máy)', PARKED: 'Tắt máy', ONLINE: 'Trực tuyến', OFFLINE: 'Ngoại tuyến', LOST_SIGNAL: 'Mất tín hiệu' };
+        const headers = ['STT', 'Biển số', 'Loại xe', 'IMEI thiết bị', 'Vận hành'];
+        const rows = filteredVehicles.map((v, i) => [
+            i + 1, v.licensePlate || '', v.type || '', `\t${v.imei || ''}`,
+            statusMap[v.status] || v.status || ''
+        ]);
+        
+        const csvContent = '\uFEFF' + [headers, ...rows].map(r => r.map(c => `"${c}"`).join(',')).join('\n');
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `danh_sach_xe_${new Date().toISOString().slice(0, 10)}.csv`;
+        a.click();
+        URL.revokeObjectURL(url);
+    };
+
     return (
-        <div className="flex flex-col h-full bg-[#f3f4f6] p-6 overflow-hidden">
+        <div className="flex flex-col h-full bg-[#f3f4f6] p-4 overflow-hidden">
             <div className="bg-white rounded-xl shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] border border-gray-200 flex flex-col h-full overflow-hidden">
                 {/* Header Section */}
                 <div className="p-6 pb-4 border-b border-gray-100 flex flex-col gap-4">
@@ -57,7 +75,7 @@ export default function VehicleListPage() {
                             <Input
                                 value={searchTerm}
                                 onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
-                                placeholder="Tìm kiếm biển số xe, tài xế,..."
+                                placeholder="Tìm kiếm biển số xe, emei,..."
                                 className="pl-9 h-10 w-full bg-white border-gray-200 focus:ring-2 focus:ring-[#284ba5]/20"
                             />
                         </div>
@@ -65,7 +83,7 @@ export default function VehicleListPage() {
                             {/* <Button variant="outline" className="h-10 w-10 p-0 flex items-center justify-center text-blue-600 border-gray-200 hover:bg-gray-50 hover:text-[#284ba5] transition-colors shadow-none rounded-lg">
                                 <Filter className="w-4 h-4" />
                             </Button> */}
-                            <Button variant="outline" className="h-10 text-green-700 border-gray-200 bg-white hover:bg-green-50 font-medium transition-colors shadow-none rounded-lg">
+                            <Button variant="outline" onClick={exportToExcel} className="h-10 text-green-700 border-gray-200 bg-white hover:bg-green-50 font-medium transition-colors shadow-none rounded-lg">
                                 <FileSpreadsheet className="w-4 h-4 mr-2" />
                                 Xuất file
                             </Button>
@@ -78,28 +96,28 @@ export default function VehicleListPage() {
                 </div>
 
                 {/* Table Header */}
-                <div className="grid grid-cols-6 gap-4 px-6 py-3.5 bg-[#f8fafd] border-b border-gray-200 text-[13px] font-semibold text-gray-500 uppercase tracking-wider">
+                <div className="grid grid-cols-5 gap-4 px-6 py-3.5 bg-[#f8fafd] border-b border-gray-200 text-[13px] font-semibold text-gray-500 uppercase tracking-wider">
                     <div>Biển số</div>
                     <div>Loại xe</div>
                     <div>IMEI thiết bị</div>
                     <div className="text-center">Vận hành</div>
-                    <div className="text-center">Nhiên liệu</div>
+                    {/* <div className="text-center">Nhiên liệu</div> */}
                     <div className="text-center">Hành động</div>
                 </div>
 
                 {/* Table Body */}
                 <div className="flex-1 overflow-y-auto">
                     {currentItems.map((v, index) => (
-                        <div key={v.imei || index} className="grid grid-cols-6 gap-4 px-6 py-3.5 border-b border-gray-100 hover:bg-blue-50/40 transition-colors items-center text-sm group">
+                        <div key={v.imei || index} className="grid grid-cols-5 gap-4 px-6 py-3.5 border-b border-gray-100 hover:bg-blue-50/40 transition-colors items-center text-sm group">
                             <div className="font-bold text-gray-800 tracking-tight">{v.licensePlate || ''}</div>
                             <div className="text-gray-500">{v.type || ''}</div>
                             <div className="text-gray-500 font-mono text-xs bg-gray-50 border border-gray-100 px-2 py-1 rounded inline-flex w-fit">{v.imei}</div>
                             <div className="flex justify-center">
                                 <Badge status={v.status} className="w-28 justify-center shadow-sm" />
                             </div>
-                            <div className={`text-center font-medium ${v.fuel > 80 ? 'text-green-600' : v.fuel > 30 ? 'text-orange-500' : 'text-red-500'}`}>
+                            {/* <div className={`text-center font-medium ${v.fuel > 80 ? 'text-green-600' : v.fuel > 30 ? 'text-orange-500' : 'text-red-500'}`}>
                                 {v.fuel || 0}%
-                            </div>
+                            </div> */}
                             <div className="flex justify-center gap-3 text-gray-400">
                                 <button onClick={() => handleEdit(v)} className="hover:text-blue-600 transition-colors p-1" title="Sửa"><Edit className="w-4 h-4" /></button>
                                 <button onClick={() => handleDelete(v.imei)} className="hover:text-red-500 transition-colors p-1" title="Xóa"><Trash2 className="w-4 h-4" /></button>
