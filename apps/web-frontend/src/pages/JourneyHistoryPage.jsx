@@ -540,7 +540,7 @@ export default function JourneyHistoryPage() {
                     </MapContainer>
 
                     {filteredLogs.length > 0 && (
-                        <div className="absolute bottom-20 left-1/2 -translate-x-1/2 z-[500] bg-white rounded-2xl shadow-[0_4px_24px_rgba(0,0,0,0.14)] border border-gray-100 px-5 py-3 flex items-center gap-4 w-[480px]">
+                        <div className="absolute bottom-[10px] left-1/2 -translate-x-1/2 z-[500] bg-white rounded-2xl shadow-[0_4px_24px_rgba(0,0,0,0.14)] border border-gray-100 px-5 py-3 flex items-center gap-4 w-[480px]">
                             <button
                                 onClick={togglePlay}
                                 className="w-10 h-10 rounded-full bg-[#335ddc] hover:bg-[#2749c0] text-white flex items-center justify-center shrink-0 transition-colors shadow-md focus:outline-none focus:ring-2 focus:ring-[#335ddc]/40"
