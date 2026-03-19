@@ -9,11 +9,9 @@ console.log('Starting Service: MQTT Ingestion');
 const redisPublisher = new Redis(process.env.REDIS_URL || 'redis://localhost:6379');
 redisPublisher.on('connect', () => console.log('Redis Publisher Connected'));
 
-// Memory Cache for Vehicle IDs to prevent excessive DB queries
-// #5: Cache entry: { id: number, cachedAt: number } — TTL 30 min
+// Vehicle ID cache (TTL: 30 min)
 const CACHE_TTL_MS = 30 * 60 * 1000;
 const vehicleCache = new Map();
-// Buffer array for batch inserting logs to prevent Database Connection Pool Exhaustion
 const journeyLogsBuffer = [];
 
 const mqttOptions = {
@@ -52,8 +50,7 @@ mqttClient.on('message', async (topic, message) => {
 
     let longitude = parseFloat(payload.long);
     let latitude = parseFloat(payload.lat);
-    // Ưu tiên car_speed (OBD/taplo) vì chính xác hơn, không phụ thuộc GPS
-    // Fallback sang speed (GPS) nếu car_speed không có
+    // Prefer car_speed (OBD) over GPS speed
     const carSpeed = parseFloat(payload.car_speed);
     const gpsSpeed = parseFloat(payload.speed);
     let speed = !isNaN(carSpeed) && carSpeed > 0 ? carSpeed : (!isNaN(gpsSpeed) ? gpsSpeed : 0);
@@ -61,16 +58,14 @@ mqttClient.on('message', async (topic, message) => {
     const fuel = parseFloat(payload.car_fuel_level) || 0;
     const coolantTemp = parseFloat(payload.car_coolant_temp) || 0;
     const throttle = parseFloat(payload.car_throttle) || 0;
-    let direction = parseFloat(payload.dir) || 0; // Lấy hướng đi từ trường dir của OBU
+    let direction = parseFloat(payload.dir) || 0;
     const carResponse = payload.car_response;
 
-
-    // Lọc nhiễu dữ liệu: Hướng đi lệch góc chuẩn độ 0-360
     if (direction < 0 || direction >= 360) direction = 0;
 
     const status = determineVehicleStatus(rpm, speed, carResponse);
 
-    // Filter invalid 0,0 GPS coordinates (both must be valid -> use &&)
+    // Filter invalid GPS coordinates
     const isValidGPS = !isNaN(latitude) && !isNaN(longitude) && (Math.abs(latitude) > 0.1 && Math.abs(longitude) > 0.1);
     if (!isValidGPS) {
         longitude = null;
@@ -78,7 +73,6 @@ mqttClient.on('message', async (topic, message) => {
     }
 
     try {
-        // --- 1. In-Memory Vehicle Cache (with TTL) ---
         const cached = vehicleCache.get(imei);
         const isExpired = cached && (Date.now() - cached.cachedAt > CACHE_TTL_MS);
 
@@ -86,21 +80,17 @@ mqttClient.on('message', async (topic, message) => {
         if (cached && !isExpired) {
             vehicleId = cached.id;
         } else {
-            // #5: Cache miss hoặc hết hạn → query lại DB
             let vehicle = await prisma.vehicle.findUnique({ where: { imei } });
 
-            // Drop message if vehicle is completely unknown (no more auto-creation)
             if (!vehicle) {
                 console.log(`[Drop] Ignored payload for unregistered vehicle: ${imei}`);
-                if (isExpired) vehicleCache.delete(imei); // Dọn cache cũ
+                if (isExpired) vehicleCache.delete(imei);
                 return;
             }
             vehicleId = vehicle.id;
             vehicleCache.set(imei, { id: vehicleId, cachedAt: Date.now() });
         }
 
-        // --- 2. Update Latest State (Vehicles Table) ---
-        // For current_location, if invalid, we might want to keep the old one or set to NULL. Since requirements state to filter them, we set to NULL so it's accurate.
         const locationSql = isValidGPS
             ? `ST_SetSRID(ST_MakePoint(${longitude}, ${latitude}), 4326)`
             : `NULL`;
@@ -119,7 +109,6 @@ mqttClient.on('message', async (topic, message) => {
             WHERE "id" = ${vehicleId};
         `);
 
-        // --- 3. Batch Journey Logs (Buffer) ---
         journeyLogsBuffer.push({
             vehicleId,
             longitude,
@@ -135,7 +124,6 @@ mqttClient.on('message', async (topic, message) => {
             timestamp: new Date().toISOString()
         });
 
-        // --- 4. Real-time Pub/Sub ---
         const realTimePing = JSON.stringify({
             imei: imei,
             lat: latitude,
@@ -154,11 +142,10 @@ mqttClient.on('message', async (topic, message) => {
     }
 });
 
-// --- FLUSH BUFFER TO DATABASE EVERY 2 SECONDS ---
+// Flush buffer to database every 2 seconds
 setInterval(async () => {
     if (journeyLogsBuffer.length === 0) return;
 
-    // Take a snapshot of the buffer and clear it immediately
     const batchToInsert = [...journeyLogsBuffer];
     journeyLogsBuffer.length = 0;
 
@@ -187,13 +174,12 @@ setInterval(async () => {
         ) VALUES ${values};
     `;
 
-    // #4: Retry tối đa 3 lần với delay tăng dần
     let attempt = 0;
     while (attempt < 3) {
         try {
             await prisma.$executeRawUnsafe(query);
             console.log(`[Batch Insert] OK: ${batchToInsert.length} logs.`);
-            break; // thành công
+            break;
         } catch (error) {
             attempt++;
             if (attempt >= 3) {

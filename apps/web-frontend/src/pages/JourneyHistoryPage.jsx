@@ -352,10 +352,8 @@ export default function JourneyHistoryPage() {
         
         <div className="flex flex-col h-full bg-[#f3f4f6] p-4 overflow-hidden">
             <div className="flex flex-1 overflow-hidden rounded-xl shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] border border-gray-200">
-                {/* Left Sidebar Layout */}
                 <div className="w-[550px] bg-white border-r border-gray-200 flex flex-col shrink-0 shadow-sm z-[5]">
 
-                    {/* Header inside Sidebar */}
                     <div className="px-4 py-4 border-b border-gray-100 flex justify-between items-center shrink-0">
                         <h1 className="text-xl font-bold tracking-tight text-gray-800">Nhật trình xe</h1>
                         <Button variant="outline" className="border-green-200 text-green-700 hover:bg-green-50 h-8 px-3 text-sm font-medium">
@@ -364,7 +362,6 @@ export default function JourneyHistoryPage() {
                         </Button>
                     </div>
 
-                    {/* Filters */}
                     <div className="p-4 border-b border-gray-100 bg-gray-50/50">
                         <div className="grid grid-cols-2 gap-3 mb-3">
                             <div className="col-span-2">
@@ -404,7 +401,6 @@ export default function JourneyHistoryPage() {
                         </Button>
                     </div>
 
-                    {/* Stats - Single Row */}
                     <div className="grid grid-cols-4 gap-2 px-4 py-3 border-b border-gray-100 bg-white">
                         <div className="bg-blue-50/50 rounded-lg p-2 border border-blue-100 flex flex-col justify-center">
                             <p className="text-[11px] text-gray-500 mb-0.5 font-medium whitespace-nowrap">Thời gian chạy</p>
@@ -424,26 +420,11 @@ export default function JourneyHistoryPage() {
                         </div>
                     </div>
 
-                    {/* Timeline Filters */}
-                    {/* <div className="flex gap-2 p-3 border-b border-gray-100 bg-gray-50/50 overflow-x-auto no-scrollbar shrink-0">
-                        {[{ v: 'ALL', l: 'Tất cả' }, { v: 'RUNNING', l: 'Đang chạy' }, { v: 'STOPPED', l: 'Dừng xe' }, { v: 'PARKED', l: 'Đỗ xe' }].map(opt => (
-                            <button
-                                key={opt.v}
-                                onClick={() => setStatusFilter(opt.v)}
-                                className={`px-3 py-1 text-xs font-medium rounded-full cursor-pointer transition-colors whitespace-nowrap ${statusFilter === opt.v ? 'bg-blue-600 text-white' : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-100'}`}
-                            >
-                                {opt.l}
-                            </button>
-                        ))}
-                    </div> */}
-
-                    {/* Timeline List */}
                     <div className="flex-1 overflow-y-auto w-full max-h-[calc(100vh-421px)]">
                         {filteredLogs.length === 0 ? (
                             <div className="p-8 text-center text-gray-400 text-sm">Chưa có dữ liệu. Hãy chọn khoảng thời gian và nhấn tra cứu.</div>
                         ) : (
                             <div className="pl-6 pr-4 py-4 w-full">
-                                {/* #8: Chỉ render visibleLogs, không render toàn bộ */}
                                 {visibleLogs.map((log, idx) => (
                                     <div
                                         key={idx}
@@ -453,10 +434,8 @@ export default function JourneyHistoryPage() {
                                             setPlaybackIndex(idx);
                                         }}
                                     >
-                                        {/* Timeline Line */}
                                         <div className="absolute left-[3px] top-2 bottom-[-10px] w-px bg-gray-200 group-last:bg-transparent" />
 
-                                        {/* Timeline Dot */}
                                         <div className={`absolute left-0 top-1.5 w-2 h-2 rounded-full border border-white ring-2 ring-white
                                             ${log.status === 'RUNNING' ? 'bg-green-500' : log.status === 'STOPPED' ? 'bg-amber-500' : 'bg-gray-400'}
                                         `} />
@@ -489,7 +468,7 @@ export default function JourneyHistoryPage() {
                                         </div>
                                     </div>
                                 ))}
-                                {/* #8: Sentinel div — IntersectionObserver theo dõi để load thêm */}
+
                                 {visibleCount < filteredLogs.length && (
                                     <div ref={sentinelRef} className="h-8 flex items-center justify-center">
                                         <span className="text-xs text-gray-400">Đang tải thêm...</span>
@@ -500,11 +479,8 @@ export default function JourneyHistoryPage() {
                     </div>
                 </div>
 
-                {/* Right Map View */}
                 <div className="flex-1 bg-gray-100 relative">
-                    {/* Map Toolbar: Legend + Search (same style as MapDashboard) */}
                     <div className="absolute top-3 left-14 right-4 z-[1000] flex items-center justify-between px-4 py-2 bg-white/90 backdrop-blur-sm rounded-xl shadow-lg border border-gray-200/60 gap-5">
-                        {/* Status Legend */}
                         <div className="flex items-center gap-5 flex-shrink-0">
                             {STATUS_LEGEND.map(s => (
                                 <div key={s.key} className="flex items-center gap-1.5">
@@ -514,7 +490,6 @@ export default function JourneyHistoryPage() {
                             ))}
                         </div>
 
-                        {/* Search Bar */}
                         <div className="relative flex-1 min-w-[300px] max-w-[500px]" ref={mapSearchRef}>
                             <div className="relative">
                                 <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -564,10 +539,8 @@ export default function JourneyHistoryPage() {
                         <JourneyMap formattedLogs={filteredLogs} zoomToLog={hoveredLog} searchCoords={mapSearchCoords} />
                     </MapContainer>
 
-                    {/* Floating Playback Widget */}
                     {filteredLogs.length > 0 && (
                         <div className="absolute bottom-20 left-1/2 -translate-x-1/2 z-[500] bg-white rounded-2xl shadow-[0_4px_24px_rgba(0,0,0,0.14)] border border-gray-100 px-5 py-3 flex items-center gap-4 w-[480px]">
-                            {/* Play/Pause Button */}
                             <button
                                 onClick={togglePlay}
                                 className="w-10 h-10 rounded-full bg-[#335ddc] hover:bg-[#2749c0] text-white flex items-center justify-center shrink-0 transition-colors shadow-md focus:outline-none focus:ring-2 focus:ring-[#335ddc]/40"
@@ -575,7 +548,6 @@ export default function JourneyHistoryPage() {
                                 {isPlaying ? <Pause className="w-4 h-4" fill="currentColor" /> : <Play className="w-4 h-4 translate-x-[2px]" fill="currentColor" />}
                             </button>
 
-                            {/* Scrubber & Info */}
                             <div className="flex-1 flex flex-col gap-2 min-w-0">
                                 <div className="flex justify-between items-center">
                                     <span className="text-[10px] font-semibold text-gray-400 tabular-nums">
@@ -603,7 +575,6 @@ export default function JourneyHistoryPage() {
                                 />
                             </div>
 
-                            {/* Speed Control */}
                             <button
                                 onClick={cycleSpeed}
                                 className="w-9 h-9 shrink-0 flex items-center justify-center text-xs font-bold text-[#335ddc] bg-[#335ddc]/8 hover:bg-[#335ddc]/15 rounded-full transition-colors border border-[#335ddc]/20 focus:outline-none"

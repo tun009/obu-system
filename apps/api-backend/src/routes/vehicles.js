@@ -2,14 +2,8 @@ const express = require('express');
 const { prisma } = require('@obu-system/database');
 const router = express.Router();
 
-/**
- * GET /api/vehicles
- * Returns a list of all vehicles with their LATEST coordinates and status.
- * This query is extremely fast because it targets the snapshot `vehicles` table.
- */
 router.get('/', async (req, res) => {
     try {
-        // We use raw SQL to specifically extract X, Y from the PostGIS geometry point.
         const vehicles = await prisma.$queryRaw`
             SELECT 
                 id, 
@@ -52,15 +46,13 @@ router.get('/:imei/history', async (req, res) => {
     }
 
     try {
-        // Ensure the vehicle exists
         const vehicle = await prisma.vehicle.findUnique({ where: { imei } });
         if (!vehicle) return res.status(404).json({ success: false, message: 'Vehicle not found' });
 
-        // Strip "Z" from ISO string to prevent Postgres from shifting timezones
+        // Strip Z to prevent Postgres timezone shift
         const startString = new Date(start).toISOString().replace('Z', '');
         const endString = new Date(end).toISOString().replace('Z', '');
 
-        // Query the massive journey_logs table. PostGIS extraction for raw Point objects.
         const history = await prisma.$queryRaw`
             SELECT 
                 speed, 
@@ -79,7 +71,6 @@ router.get('/:imei/history', async (req, res) => {
             ORDER BY "timestamp" ASC;
         `;
 
-        // Tính tổng quãng đường bằng PostGIS
         const totalDistanceQuery = await prisma.$queryRaw`
             SELECT ST_Length(
                 ST_MakeLine(location::geometry)::geography
@@ -105,11 +96,6 @@ router.get('/:imei/history', async (req, res) => {
     }
 });
 
-/**
- * GET /api/vehicles/:imei/check
- * Verify if the vehicle exists and is actively streaming data (updated within 5 mins).
- * Returns the latest stats or offline notice.
- */
 router.get('/:imei/check', async (req, res) => {
     const { imei } = req.params;
     try {
@@ -131,8 +117,7 @@ router.get('/:imei/check', async (req, res) => {
         }
 
         const vehicle = vehicles[0];
-        
-        // Cần đảm bảo thiết bị có dữ liệu lat lng hợp lệ
+
         if (vehicle.lat == null || vehicle.lng == null) {
             return res.json({ success: false, status: 'error', message: 'Thiết bị chưa có dữ liệu GPS hợp lệ' });
         }
@@ -155,10 +140,6 @@ router.get('/:imei/check', async (req, res) => {
     }
 });
 
-/**
- * POST /api/vehicles
- * Manually register a new vehicle or update license plate mapping
- */
 router.post('/', async (req, res) => {
     const { imei, licensePlate, type } = req.body;
     if (!imei) return res.status(400).json({ success: false, message: 'IMEI is required' });
@@ -176,10 +157,6 @@ router.post('/', async (req, res) => {
     }
 });
 
-/**
- * PUT /api/vehicles/:imei
- * Update a vehicle's basic details
- */
 router.put('/:imei', async (req, res) => {
     const { imei } = req.params;
     const { licensePlate, type } = req.body;
@@ -195,11 +172,6 @@ router.put('/:imei', async (req, res) => {
     }
 });
 
-/**
- * DELETE /api/vehicles/:imei
- * Delete a vehicle. Due to Prisma Cascade setup, 
- * this also deletes ALL related JourneyLogs automatically.
- */
 router.delete('/:imei', async (req, res) => {
     const { imei } = req.params;
     try {
@@ -209,7 +181,6 @@ router.delete('/:imei', async (req, res) => {
         res.json({ success: true, message: 'Vehicle and related logs successfully deleted' });
     } catch (error) {
         console.error('API DELETE error:', error);
-        // Prisma throws error if record not found
         res.status(500).json({ success: false, message: 'Vehicle deletion failed. It may not exist.' });
     }
 });

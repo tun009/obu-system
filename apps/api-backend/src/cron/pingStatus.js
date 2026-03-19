@@ -18,7 +18,6 @@ mqttClient.on('connect', () => {
     console.log('[CRON] MQTT Connected for Watchdog Ping.');
 });
 
-// Chạy tự động mỗi 3 phút
 cron.schedule('*/3 * * * *', async () => {
     console.log('[CRON] Running Vehicle Status Watchdog...');
     try {
@@ -26,7 +25,7 @@ cron.schedule('*/3 * * * *', async () => {
         const tenMinutesAgo = new Date(now.getTime() - 10 * 60 * 1000);
         const threeMinutesAgo = new Date(now.getTime() - 3 * 60 * 1000);
 
-        // 1. Mark as completely OFFLINE if no signal for > 10 mins
+        // Mark OFFLINE if no signal for > 10 mins
         const deadVehicles = await prisma.vehicle.findMany({
             where: {
                 lastUpdatedAt: { lt: tenMinutesAgo },
@@ -48,7 +47,6 @@ cron.schedule('*/3 * * * *', async () => {
             });
             console.log(`[CRON] Marked ${deadVehicles.length} vehicles as OFFLINE.`);
 
-            // Push to Redis to notify Frontend
             for (const v of deadVehicles) {
                 redisPublisher.publish('OBU_REALTIME_STREAM', JSON.stringify({
                     imei: v.imei,
@@ -57,8 +55,7 @@ cron.schedule('*/3 * * * *', async () => {
             }
         }
 
-        // 2. Ping vehicles that are PARKED or haven't sent data in the last 3 mins (but < 10 mins)
-        // Or we just ping anything hasn't sent data in 3 mins, to prompt them.
+        // Ping vehicles inactive for 3-10 mins
         const sleepingVehicles = await prisma.vehicle.findMany({
             where: {
                 lastUpdatedAt: { lt: threeMinutesAgo, gte: tenMinutesAgo },
@@ -69,7 +66,6 @@ cron.schedule('*/3 * * * *', async () => {
         if (sleepingVehicles.length > 0) {
             console.log(`[CRON] Pinging ${sleepingVehicles.length} sleeping/parked vehicles...`);
             for (const v of sleepingVehicles) {
-                // Publish MQTT message to prompt OBU to send response
                 mqttClient.publish(`obuv1/${v.imei}`, 'check_status');
             }
         }

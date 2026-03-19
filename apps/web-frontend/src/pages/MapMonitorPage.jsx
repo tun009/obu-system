@@ -9,7 +9,6 @@ export default function MapMonitorPage() {
 
     return (
         <div className="flex h-full p-4 gap-4 pb-0">
-            {/* 500px fixed width Sidebar */}
             <div className="w-[500px] flex-shrink-0 h-full pb-4">
                 <div className="h-full rounded-lg overflow-hidden shadow-sm border border-gray-200">
                     <VehicleList 
@@ -20,7 +19,6 @@ export default function MapMonitorPage() {
                 </div>
             </div>
 
-            {/* Flexible Map Container */}
             <div className="flex-1 h-full pb-4">
                 <MapDashboard 
                     vehicles={vehicles} 

@@ -21,20 +21,19 @@ function determineVehicleStatus(rpm, speed, carResponse) {
     const currentRpm = parseFloat(rpm) || 0;
     let currentSpeed = parseFloat(speed) || 0;
 
-    // Ưu tiên tuyệt đối: Vận tốc GPS (Ngưỡng 1km/h - thống nhất với frontend)
     const SPEED_THRESHOLD = 1; 
     
     if (currentSpeed >= SPEED_THRESHOLD) {
         return 'RUNNING';
     }
 
-    // Nếu xe đứng im (Speed < 3), ta mới dùng tới cảm biến ACC & RPM của OBU/ODB2
+    // Stationary: check ACC & RPM sensors
     if (String(carResponse) === '0') {
         return 'PARKED';
     }
 
     if (currentRpm > 0) {
-        return 'STOPPED'; // Xe nổ máy nhưng đứng yên
+        return 'STOPPED'; // Engine running but stationary
     }
 
     return 'PARKED';

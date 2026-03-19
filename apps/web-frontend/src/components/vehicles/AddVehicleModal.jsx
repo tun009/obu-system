@@ -57,7 +57,7 @@ export default function AddVehicleModal({ onClose, editingVehicle }) {
     return (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[9999]">
             <div className="bg-white rounded-xl shadow-2xl w-[600px] overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-                {/* Header */}
+
                 <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
                     <h2 className="text-xl font-bold text-gray-800">{isEditMode ? 'Cập nhật xe' : 'Thêm xe'}</h2>
                     <button onClick={onClose} className="text-gray-400 hover:text-gray-600 hover:bg-gray-100 p-1 rounded-full transition-colors">
@@ -65,7 +65,7 @@ export default function AddVehicleModal({ onClose, editingVehicle }) {
                     </button>
                 </div>
 
-                {/* Body */}
+
                 <div className="p-6 pb-2">
                     <div className="grid grid-cols-2 gap-6 mb-6">
                         <div>
@@ -116,7 +116,7 @@ export default function AddVehicleModal({ onClose, editingVehicle }) {
                     )}
                 </div>
 
-                {/* Footer */}
+
                 <div className="px-6 py-4 border-t border-gray-100 flex justify-end gap-3 bg-white">
                     <Button variant="outline" onClick={onClose} className="border-gray-200 text-gray-600 bg-white hover:bg-gray-50 px-6 font-medium shadow-none transition-colors">
                         Huỷ

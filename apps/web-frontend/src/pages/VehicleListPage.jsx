@@ -4,7 +4,7 @@ import { useVehicles } from '../context/VehicleContext';
 import Input from '../components/ui/Input';
 import Button from '../components/ui/Button';
 import Badge from '../components/ui/Badge';
-import { Search, Filter, FileSpreadsheet, Plus, Edit, Trash2 } from 'lucide-react';
+import { Search, FileSpreadsheet, Plus, Edit, Trash2 } from 'lucide-react';
 import AddVehicleModal from '../components/vehicles/AddVehicleModal';
 
 export default function VehicleListPage() {
@@ -65,7 +65,7 @@ export default function VehicleListPage() {
     return (
         <div className="flex flex-col h-full bg-[#f3f4f6] p-4 overflow-hidden">
             <div className="bg-white rounded-xl shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] border border-gray-200 flex flex-col h-full overflow-hidden">
-                {/* Header Section */}
+
                 <div className="p-6 pb-4 border-b border-gray-100 flex flex-col gap-4">
                     <h2 className="text-xl font-bold text-gray-800 tracking-tight">Danh sách xe ({filteredVehicles.length})</h2>
 
@@ -80,9 +80,6 @@ export default function VehicleListPage() {
                             />
                         </div>
                         <div className="flex items-center gap-2">
-                            {/* <Button variant="outline" className="h-10 w-10 p-0 flex items-center justify-center text-blue-600 border-gray-200 hover:bg-gray-50 hover:text-[#284ba5] transition-colors shadow-none rounded-lg">
-                                <Filter className="w-4 h-4" />
-                            </Button> */}
                             <Button variant="outline" onClick={exportToExcel} className="h-10 text-green-700 border-gray-200 bg-white hover:bg-green-50 font-medium transition-colors shadow-none rounded-lg">
                                 <FileSpreadsheet className="w-4 h-4 mr-2" />
                                 Xuất file
@@ -95,17 +92,16 @@ export default function VehicleListPage() {
                     </div>
                 </div>
 
-                {/* Table Header */}
+
                 <div className="grid grid-cols-5 gap-4 px-6 py-3.5 bg-[#f8fafd] border-b border-gray-200 text-[13px] font-semibold text-gray-500 uppercase tracking-wider">
                     <div>Biển số</div>
                     <div>Loại xe</div>
                     <div>IMEI thiết bị</div>
                     <div className="text-center">Vận hành</div>
-                    {/* <div className="text-center">Nhiên liệu</div> */}
                     <div className="text-center">Hành động</div>
                 </div>
 
-                {/* Table Body */}
+
                 <div className="flex-1 overflow-y-auto">
                     {currentItems.map((v, index) => (
                         <div key={v.imei || index} className="grid grid-cols-5 gap-4 px-6 py-3.5 border-b border-gray-100 hover:bg-blue-50/40 transition-colors items-center text-sm group">
@@ -115,9 +111,6 @@ export default function VehicleListPage() {
                             <div className="flex justify-center">
                                 <Badge status={v.status} className="w-28 justify-center shadow-sm" />
                             </div>
-                            {/* <div className={`text-center font-medium ${v.fuel > 80 ? 'text-green-600' : v.fuel > 30 ? 'text-orange-500' : 'text-red-500'}`}>
-                                {v.fuel || 0}%
-                            </div> */}
                             <div className="flex justify-center gap-3 text-gray-400">
                                 <button onClick={() => handleEdit(v)} className="hover:text-blue-600 transition-colors p-1" title="Sửa"><Edit className="w-4 h-4" /></button>
                                 <button onClick={() => handleDelete(v.imei)} className="hover:text-red-500 transition-colors p-1" title="Xóa"><Trash2 className="w-4 h-4" /></button>
@@ -133,7 +126,7 @@ export default function VehicleListPage() {
                     )}
                 </div>
 
-                {/* Pagination Footer */}
+
                 <div className="p-4 border-t border-gray-100 flex items-center justify-between text-xs text-gray-500 bg-white">
                     <div className="font-medium">Showing {indexOfFirstItem + 1}-{Math.min(indexOfLastItem, filteredVehicles.length)} out of {filteredVehicles.length} items</div>
 

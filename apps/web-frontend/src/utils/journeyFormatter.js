@@ -2,8 +2,7 @@ export function formatJourneyData(rawLogs) {
     if (!rawLogs || rawLogs.length === 0) return { logs: [], stats: { runningMin: 0, stoppedMin: 0, parkedMin: 0, engineOnMin: 0 } };
 
     const stats = { runningMin: 0, stoppedMin: 0, parkedMin: 0, engineOnMin: 0 };
-    
-    // Đảm bảo dữ liệu sắp xếp theo thứ tự thời gian tăng dần để tính toán
+
     const sortedLogs = [...rawLogs].sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
 
     let lastLat = null;
@@ -14,15 +13,12 @@ export function formatJourneyData(rawLogs) {
         const rpm = parseInt(log.rpm) || 0;
         
         let status = 'OFFLINE';
-        
-        // Ưu tiên số 1: Vận tốc GPS (ngưỡng 1km/h - thống nhất toàn hệ thống)
+
         if (speed >= 1) {
             status = 'RUNNING';
         } else if (rpm > 0) {
-            // Đứng im nhưng có vòng tua máy -> Dừng đỗ/Nổ máy
             status = 'STOPPED';
         } else {
-            // Không chạy, không vòng tua -> Tắt máy
             status = 'PARKED';
         }
 
@@ -49,7 +45,6 @@ export function formatJourneyData(rawLogs) {
         };
     });
 
-    // Tính thời gian tích luỹ (Cộng dồn khoảng cách thời gian giữa các bản ghi)
     let lastLogTime = null;
     let lastStatus = null;
 
@@ -58,7 +53,7 @@ export function formatJourneyData(rawLogs) {
         if (lastLogTime && lastStatus) {
             const diffMin = (currTime - lastLogTime) / 60000;
             
-            // Giới hạn max 10 phút / khoảng gap. Nếu rớt mạng quá 10 phút không làm thay đổi báo cáo ảo.
+            // Cap at 10 min per gap to prevent inflated stats from network drops
             const timeToAdd = Math.min(diffMin, 10);
             
             if (lastStatus === 'RUNNING') stats.runningMin += timeToAdd;
@@ -79,7 +74,7 @@ export function formatJourneyData(rawLogs) {
     stats.engineOnMin = Math.round(stats.engineOnMin);
 
     return {
-        logs: formattedLogs, // Thứ tự ASC (cũ -> mới), nhất quán với ORDER BY timestamp ASC từ backend
+        logs: formattedLogs,
         stats
     };
 }

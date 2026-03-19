@@ -1,11 +1,10 @@
 import React, { useState } from 'react';
 import Badge from './ui/Badge';
 import Input from './ui/Input';
-import Button from './ui/Button';
 
 export default function VehicleList({ vehicles, onSelectVehicle, selectedVehicleId }) {
     const [searchTerm, setSearchTerm] = useState('');
-    const [filter, setFilter] = useState('ALL'); // ALL, RUNNING, STOPPED, PARKED, ENGINE_ON, ENGINE_OFF
+    const [filter, setFilter] = useState('ALL');
 
     const stats = {
         total: vehicles.length,
@@ -29,11 +28,9 @@ export default function VehicleList({ vehicles, onSelectVehicle, selectedVehicle
 
     return (
         <div className="flex flex-col h-full bg-white border-r border-gray-200">
-            {/* Header & Title */}
             <div className="p-5 pb-0">
                 <h2 className="text-xl font-bold text-gray-800 tracking-tight">Danh sách đội xe ({vehicles.length})</h2>
 
-                {/* Search / Filter Row */}
                 <div className="flex gap-2 mt-4 items-center">
                     <div className="relative flex-1">
                         <svg className="w-4 h-4 text-gray-400 absolute left-3 top-3 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
@@ -46,7 +43,6 @@ export default function VehicleList({ vehicles, onSelectVehicle, selectedVehicle
                     </div>
                 </div>
 
-                {/* Status KPI Blocks */}
                 <div className="grid grid-cols-5 gap-2 mt-4 text-center">
                     <div className="bg-gray-50 rounded-lg p-2 border border-gray-100 cursor-pointer hover:bg-blue-50" onClick={() => setFilter('ALL')}>
                         <p className="text-[12px] font-semibold text-gray-500">Tổng xe</p>
@@ -70,7 +66,6 @@ export default function VehicleList({ vehicles, onSelectVehicle, selectedVehicle
                     </div>
                 </div>
 
-                {/* Horizontal Quick Filter Chips */}
                 <div className="flex gap-2 mt-4 pb-4 overflow-x-auto no-scrollbar border-b border-gray-100">
                     <button className={`whitespace-nowrap px-3 py-1 rounded-full text-xs font-medium border ${filter === 'ALL' ? 'bg-[#335ddc]/10 text-[#335ddc] border-[#335ddc]/30' : 'text-gray-600 border-gray-200 bg-white hover:bg-gray-50'}`} onClick={() => setFilter('ALL')}>Tất cả</button>
                     <button className={`whitespace-nowrap px-3 py-1 rounded-full text-xs font-medium border ${filter === 'RUNNING' ? 'bg-green-100 text-green-700 border-green-300' : 'text-gray-600 border-gray-200 bg-white hover:bg-gray-50'}`} onClick={() => setFilter('RUNNING')}>Đang chạy</button>
@@ -81,7 +76,6 @@ export default function VehicleList({ vehicles, onSelectVehicle, selectedVehicle
                 </div>
             </div>
 
-            {/* List Header Table-style */}
             <div className="grid grid-cols-7 gap-2 px-5 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider bg-gray-50/50">
                 <div className="col-span-3">Biển số</div>
                 <div className="col-span-2 text-center">Trạng thái</div>
@@ -89,12 +83,11 @@ export default function VehicleList({ vehicles, onSelectVehicle, selectedVehicle
                 <div className="text-center">Engine</div>
             </div>
 
-            {/* Vehicle Rows */}
             <div className="flex-1 overflow-y-auto w-full pb-4">
                 {filteredVehicles.map((v) => {
                     const isEngineOn = v.status === 'RUNNING' || v.status === 'STOPPED';
                     const lastUpdateStr = v.lastUpdate
-                        ? new Date(v.lastUpdate).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
+                        ? new Date(v.lastUpdate).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
                         : '';
                     return (
                     <div

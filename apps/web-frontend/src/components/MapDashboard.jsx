@@ -7,7 +7,6 @@ import Badge from './ui/Badge';
 import ReactDOMServer from 'react-dom/server';
 import { Search, X } from 'lucide-react';
 
-// Fix leafet default icon path issues
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
     iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
@@ -15,7 +14,6 @@ L.Icon.Default.mergeOptions({
     shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
 });
 
-// Status config for legend
 const STATUS_LEGEND = [
     { key: 'RUNNING',     label: 'Đang chạy', color: '#10b981' },
     { key: 'STOPPED',     label: 'Dừng xe',    color: '#f59e0b' },
@@ -23,9 +21,8 @@ const STATUS_LEGEND = [
     { key: 'OFFLINE',     label: 'Mất tín hiệu', color: '#ef4444' },
 ];
 
-// Create custom SVG Leaflet Marker based on React CarIcon
 const createCustomMarker = (status, direction = 0, label = '') => {
-    const iconH = label ? 56 : 40; // SVG cao hơn khi có label biển số
+    const iconH = label ? 56 : 40;
     const rawSvg = ReactDOMServer.renderToString(
         <CarIcon status={status} label={label} width={24} height={iconH} />
     );
@@ -58,7 +55,6 @@ function MapFocus({ selectedVehicle, vehicles }) {
     return null;
 }
 
-// Search component that flies map to searched location
 function MapSearchFlyTo({ searchCoords }) {
     const map = useMap();
     useEffect(() => {
@@ -69,7 +65,6 @@ function MapSearchFlyTo({ searchCoords }) {
     return null;
 }
 
-// Mini car icon for legend (no label, smaller)
 function LegendCarIcon({ status }) {
     return <CarIcon status={status} width={16} height={26} style={{ display: 'inline-block', verticalAlign: 'middle' }} />;
 }
@@ -84,7 +79,6 @@ export default function MapDashboard({ vehicles, selectedVehicle }) {
     const searchTimeout = useRef(null);
     const dropdownRef = useRef(null);
 
-    // Count vehicles by status
     const statusCounts = STATUS_LEGEND.reduce((acc, s) => {
         acc[s.key] = vehicles.filter(v => {
             if (s.key === 'OFFLINE') return v.status === 'OFFLINE' || v.status === 'LOST_SIGNAL';
@@ -93,7 +87,6 @@ export default function MapDashboard({ vehicles, selectedVehicle }) {
         return acc;
     }, {});
 
-    // Nominatim search with debounce
     const handleSearchChange = (e) => {
         const value = e.target.value;
         setSearchQuery(value);
@@ -136,7 +129,6 @@ export default function MapDashboard({ vehicles, selectedVehicle }) {
         setSearchCoords(null);
     };
 
-    // Close dropdown when clicking outside
     useEffect(() => {
         const handleClickOutside = (e) => {
             if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
@@ -149,9 +141,9 @@ export default function MapDashboard({ vehicles, selectedVehicle }) {
 
     return (
         <div className="w-full h-full rounded-lg overflow-hidden border border-gray-200 bg-white shadow-sm z-0 relative">
-            {/* ── Map Toolbar: Legend + Search (floating overlay) ── */}
+
             <div className="absolute top-3 left-14 right-4 z-[1000] flex items-center justify-between px-4 py-2 bg-white/90 backdrop-blur-sm rounded-xl shadow-lg border border-gray-200/60 gap-5">
-                {/* Status Legend */}
+
                 <div className="flex items-center gap-5 flex-shrink-0">
                     {STATUS_LEGEND.map(s => (
                         <div key={s.key} className="flex items-center gap-1.5">
@@ -168,7 +160,7 @@ export default function MapDashboard({ vehicles, selectedVehicle }) {
                     ))}
                 </div>
 
-                {/* Search Bar */}
+
                 <div className="relative flex-1 min-w-[300px] max-w-[500px]" ref={dropdownRef}>
                     <div className="relative">
                         <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -187,7 +179,7 @@ export default function MapDashboard({ vehicles, selectedVehicle }) {
                         )}
                     </div>
 
-                    {/* Search Results Dropdown */}
+
                     {showDropdown && (
                         <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-[9999] max-h-[200px] overflow-y-auto">
                             {searchResults.map((r, idx) => (
@@ -211,7 +203,7 @@ export default function MapDashboard({ vehicles, selectedVehicle }) {
                 </div>
             </div>
 
-            {/* ── Map (full height, toolbar floats on top) ──── */}
+
             <div className="w-full h-full">
                 <MapContainer center={defaultCenter} zoom={16} style={{ height: '100%', width: '100%' }}>
                     <TileLayer
@@ -231,36 +223,32 @@ export default function MapDashboard({ vehicles, selectedVehicle }) {
                                 zIndexOffset={selectedVehicle?.imei === v.imei ? 1000 : 0}
                             >
                                 <Popup className="obu-popup">
-                                    <div className="p-1 min-w-[200px]">
-                                        <div className="flex justify-between items-center mb-3">
-                                            <h3 className="font-bold text-gray-800 text-base">{v.licensePlate || v.imei}</h3>
+                                    <div className="min-w-[180px]">
+                                        <div className="flex justify-between items-center mb-2">
+                                            <h3 className="font-bold text-gray-800 text-sm">{v.licensePlate || v.imei}</h3>
                                             <Badge status={v.status} />
                                         </div>
-
-                                        <div className="grid grid-cols-2 gap-y-3 gap-x-2 text-sm">
+                                        <div className="grid grid-cols-3 gap-x-3 gap-y-1.5 text-xs">
                                             <div>
-                                                <p className="text-gray-500 text-xs">Km/h</p>
-                                                <p className="font-medium">{Math.round(v.speed || 0)}</p>
+                                                <p className="text-gray-400 text-[10px]">Km/h</p>
+                                                <p className="font-semibold text-gray-800">{Math.round(v.speed || 0)}</p>
                                             </div>
                                             <div>
-                                                <p className="text-gray-500 text-xs">Engine</p>
-                                                <p className="font-medium">{v.rpm > 0 ? 'ON' : 'OFF'}</p>
+                                                <p className="text-gray-400 text-[10px]">Engine</p>
+                                                <p className="font-semibold text-gray-800">{v.rpm > 0 ? 'ON' : 'OFF'}</p>
                                             </div>
                                             {/* <div>
-                                                <p className="text-gray-500 text-xs">Fuel</p>
-                                                <p className="font-medium text-red-600">{v.fuel || 0}%</p>
+                                                <p className="text-gray-400 text-[10px]">Fuel</p>
+                                                <p className="font-semibold text-red-600">{v.fuel || 0}%</p>
                                             </div> */}
                                             <div>
-                                                <p className="text-gray-500 text-xs">Coolant</p>
-                                                <p className="font-medium">{v.coolantTemp || 0}°C</p>
-                                            </div>
-                                            <div className="col-span-2">
-                                                <p className="text-gray-500 text-xs">Vị trí (WGS84)</p>
-                                                <p className="font-mono text-xs text-gray-700 bg-gray-50 p-1 rounded mt-1">
-                                                    Lat: {v.lat.toFixed(5)}, Lng: {v.lng.toFixed(5)}
-                                                </p>
+                                                <p className="text-gray-400 text-[10px]">Update</p>
+                                                <p className="font-semibold text-gray-800">{v.lastUpdate ? new Date(v.lastUpdate).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) : '--'}</p>
                                             </div>
                                         </div>
+                                        <p className="font-mono text-[10px] text-gray-400 mt-1.5 leading-tight">
+                                            {v.lat.toFixed(5)}, {v.lng.toFixed(5)}
+                                        </p>
                                     </div>
                                 </Popup>
                             </Marker>
