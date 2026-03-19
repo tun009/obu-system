@@ -21,7 +21,7 @@ function determineVehicleStatus(rpm, speed, carResponse) {
     const currentRpm = parseFloat(rpm) || 0;
     let currentSpeed = parseFloat(speed) || 0;
 
-    const SPEED_THRESHOLD = 1; 
+    const SPEED_THRESHOLD = 2; 
     
     if (currentSpeed >= SPEED_THRESHOLD) {
         return 'RUNNING';

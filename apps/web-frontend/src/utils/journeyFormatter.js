@@ -14,7 +14,7 @@ export function formatJourneyData(rawLogs) {
         
         let status = 'OFFLINE';
 
-        if (speed >= 1) {
+        if (speed >= 2) {
             status = 'RUNNING';
         } else if (rpm > 0) {
             status = 'STOPPED';
