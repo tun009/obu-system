@@ -1,43 +1,65 @@
-# OBU Fleet Tracker System (Microservices)
+# OBU Fleet Tracker System
 
-Dự án giám sát vận hành hệ thống OBU với kiến trúc Monorepo (Turborepo), sử dụng React, Vite, Tailwind CSS cho Frontend và Node.js, Express, Socket.io, Redis, PostgreSQL (với PostGIS) cho Backend.
+A real-time vehicle fleet monitoring system built with a **Monorepo (Turborepo)** architecture. The stack includes React + Vite for the frontend, and Node.js, Express, Socket.io, MQTT, Redis, and PostgreSQL (with PostGIS) for the backend.
 
-## Yêu cầu môi trường (Prerequisites)
-Bạn cần cài đặt các công cụ sau trước khi chạy dự án:
-- **Node.js**: Phiên bản >= 18.x
-- **Docker & Docker Compose**: Để chạy PostgreSQL và Redis.
+## Architecture
 
-## Hướng dẫn cài đặt và Khởi động nhanh (Quick Start)
+```
+obu-system/
+├── apps/
+│   ├── mqtt-ingestion   # MQTT listener → processes OBU payloads → writes to DB & Redis
+│   ├── api-backend      # REST API + WebSocket hub + CRON watchdog
+│   └── web-frontend     # React SPA with real-time map & vehicle management
+└── packages/
+    └── database         # Shared Prisma client & schema (PostgreSQL + PostGIS)
+```
 
-### Bước 1: Khởi động cơ sở dữ liệu (Database & Redis)
-Mở terminal tại thư mục gốc của dự án (`obu-system`) và chạy lệnh sau để khởi tạo DB và Redis qua Docker:
+## Prerequisites
+
+- **Node.js** >= 18.x
+- **Docker & Docker Compose** (for PostgreSQL + PostGIS and Redis)
+
+## Quick Start
+
+### 1. Start Infrastructure (Database & Redis)
+
 ```bash
 docker-compose up -d
 ```
 
-### Bước 2: Cài đặt thư viện (Install Dependencies)
-Dự án sử dụng NPM workspaces. Tại thư mục gốc của dự án (`obu-system`), chạy lệnh:
+### 2. Install Dependencies
+
 ```bash
 npm install
 ```
 
-### Bước 3: Đồng bộ Database Schema (Prisma)
-Chạy lệnh sau để tạo bảng trong PostgreSQL:
+### 3. Sync Database Schema (Prisma)
+
 ```bash
 npx prisma db push --schema=packages/database/prisma/schema.prisma
 ```
 
-### Bước 4: Khởi động Toàn bộ Dự án (Chạy 3 dịch vụ cùng lúc)
-Nhờ có Turborepo cấu hình sẵn, bạn chỉ cần đứng ở thư mục gốc (`obu-system`) và chạy **1 lệnh duy nhất** này:
+### 4. Run All Services
+
+Turborepo runs all 3 services in parallel with a single command:
+
 ```bash
 npm run dev
 ```
 
-(Lệnh trên sẽ tự động bật 3 terminal song song cho 3 hệ thống: `mqtt-ingestion`, `api-backend`, và `web-frontend`).
+This starts `mqtt-ingestion`, `api-backend`, and `web-frontend` concurrently.
 
----
+## Access
 
-## Truy cập Hệ thống
-Sau khi chạy thành công `npm run dev`, mở trình duyệt và truy cập:
-👉 **http://localhost:5173**
-(Lưu ý: Bạn có thể cần đợi khoảng vài giây ở lần đầu tiên để Vite bundle giao diện React, sau đó ấn F5 lại trình duyệt nếu chưa lên hình).
+Once running, open your browser at: **http://localhost:8080**
+
+## Tech Stack
+
+| Layer | Technology |
+|-------|-----------|
+| Frontend | React, Vite, Tailwind CSS, Leaflet, Socket.io Client |
+| API | Node.js, Express, Socket.io, Prisma |
+| Ingestion | MQTT.js, Redis Pub/Sub |
+| Database | PostgreSQL + PostGIS |
+| Cache | Redis |
+| DevOps | Docker, Turborepo |
