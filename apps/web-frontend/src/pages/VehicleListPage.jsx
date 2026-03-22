@@ -6,20 +6,22 @@ import Button from '../components/ui/Button';
 import Badge from '../components/ui/Badge';
 import { Search, FileSpreadsheet, Plus, Edit, Trash2 } from 'lucide-react';
 import AddVehicleModal from '../components/vehicles/AddVehicleModal';
+import { useTranslation } from 'react-i18next';
 
 export default function VehicleListPage() {
     const { vehicles, setVehicles, API_BASE_URL } = useVehicles();
     const [searchTerm, setSearchTerm] = useState('');
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [editingVehicle, setEditingVehicle] = useState(null);
+    const { t } = useTranslation();
 
     const handleDelete = async (imei) => {
-        if (window.confirm('Xóa xe này sẽ xóa TOÀN BỘ dữ liệu nhật trình lịch sử liên quan. Bạn có chắc chắn không?')) {
+        if (window.confirm(t('vehicleList.confirmDelete'))) {
             try {
                 await axios.delete(`${API_BASE_URL}/vehicles/${imei}`);
                 setVehicles(prev => prev.filter(v => v.imei !== imei));
             } catch (error) {
-                alert('Có lỗi xảy ra khi xóa phương tiện này.');
+                alert(t('vehicleList.deleteError'));
             }
         }
     };
@@ -45,8 +47,8 @@ export default function VehicleListPage() {
     const totalPages = Math.ceil(filteredVehicles.length / itemsPerPage);
 
     const exportToExcel = () => {
-        const statusMap = { RUNNING: 'Đang chạy', STOPPED: 'Dừng (nổ máy)', PARKED: 'Tắt máy', ONLINE: 'Trực tuyến', OFFLINE: 'Ngoại tuyến', LOST_SIGNAL: 'Mất tín hiệu' };
-        const headers = ['STT', 'Biển số', 'Loại xe', 'IMEI thiết bị', 'Vận hành'];
+        const statusMap = { RUNNING: t('monitor.statusRunning'), STOPPED: t('monitor.statusStopped'), PARKED: t('monitor.statusParked'), OFFLINE: t('monitor.statusOffline'), LOST_SIGNAL: t('monitor.statusOffline') };
+        const headers = ['STT', t('vehicleList.colPlate'), 'Loại xe', 'IMEI thiết bị', t('vehicleList.colStatus')];
         const rows = filteredVehicles.map((v, i) => [
             i + 1, v.licensePlate || '', v.type || '', `\t${v.imei || ''}`,
             statusMap[v.status] || v.status || ''
@@ -67,7 +69,7 @@ export default function VehicleListPage() {
             <div className="bg-white rounded-xl shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] border border-gray-200 flex flex-col h-full overflow-hidden">
 
                 <div className="p-6 pb-4 border-b border-gray-100 flex flex-col gap-4">
-                    <h2 className="text-xl font-bold text-gray-800 tracking-tight">Danh sách xe ({filteredVehicles.length})</h2>
+                    <h2 className="text-xl font-bold text-gray-800 tracking-tight">{t('vehicleList.title')} ({filteredVehicles.length})</h2>
 
                     <div className="flex justify-between items-center gap-4">
                         <div className="flex-1 max-w-lg relative">
@@ -75,18 +77,18 @@ export default function VehicleListPage() {
                             <Input
                                 value={searchTerm}
                                 onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
-                                placeholder="Tìm kiếm biển số xe, imei,..."
+                                placeholder={t('vehicleList.searchPlaceholder', 'Tìm kiếm biển số xe, imei,...')}
                                 className="pl-9 h-10 w-full bg-white border-gray-200 focus:ring-2 focus:ring-[#284ba5]/20"
                             />
                         </div>
                         <div className="flex items-center gap-2">
                             <Button variant="outline" onClick={exportToExcel} className="h-10 text-green-700 border-gray-200 bg-white hover:bg-green-50 font-medium transition-colors shadow-none rounded-lg">
                                 <FileSpreadsheet className="w-4 h-4 mr-2" />
-                                Xuất file
+                                {t('vehicleList.export', 'Xuất file')}
                             </Button>
                             <Button className="h-10 bg-[#284ba5] hover:bg-[#1e3a8a] text-white font-medium shadow-sm transition-all rounded-lg" onClick={() => { setEditingVehicle(null); setIsAddModalOpen(true); }}>
                                 <Plus className="w-4 h-4 mr-1.5" />
-                                Thêm mới
+                                {t('vehicleList.addVehicle', 'Thêm mới')}
                             </Button>
                         </div>
                     </div>
@@ -94,11 +96,11 @@ export default function VehicleListPage() {
 
 
                 <div className="grid grid-cols-5 gap-4 px-6 py-3.5 bg-[#f8fafd] border-b border-gray-200 text-[13px] font-semibold text-gray-500 uppercase tracking-wider">
-                    <div>Biển số</div>
-                    <div>Loại xe</div>
-                    <div>IMEI thiết bị</div>
-                    <div className="text-center">Vận hành</div>
-                    <div className="text-center">Hành động</div>
+                    <div>{t('vehicleList.colPlate')}</div>
+                    <div>{t('common.vehicleType', 'Loại xe')}</div>
+                    <div>{t('vehicleList.colImei')}</div>
+                    <div className="text-center">{t('vehicleList.colStatus')}</div>
+                    <div className="text-center">{t('vehicleList.colActions')}</div>
                 </div>
 
 
@@ -112,8 +114,8 @@ export default function VehicleListPage() {
                                 <Badge status={v.status} className="w-28 justify-center shadow-sm" />
                             </div>
                             <div className="flex justify-center gap-3 text-gray-400">
-                                <button onClick={() => handleEdit(v)} className="hover:text-blue-600 transition-colors p-1" title="Sửa"><Edit className="w-4 h-4" /></button>
-                                <button onClick={() => handleDelete(v.imei)} className="hover:text-red-500 transition-colors p-1" title="Xóa"><Trash2 className="w-4 h-4" /></button>
+                                <button onClick={() => handleEdit(v)} className="hover:text-blue-600 transition-colors p-1" title={t('vehicleList.edit')}><Edit className="w-4 h-4" /></button>
+                                <button onClick={() => handleDelete(v.imei)} className="hover:text-red-500 transition-colors p-1" title={t('vehicleList.delete')}><Trash2 className="w-4 h-4" /></button>
                             </div>
                         </div>
                     ))}
@@ -121,14 +123,14 @@ export default function VehicleListPage() {
                     {currentItems.length === 0 && (
                         <div className="flex flex-col items-center justify-center h-full min-h-[300px] text-gray-400 bg-gray-50/50">
                             <Search className="w-10 h-10 mb-4 opacity-20" />
-                            <p className="font-medium text-gray-500">Không tìm thấy dữ liệu xe phù hợp.</p>
+                            <p className="font-medium text-gray-500">{t('vehicleList.noVehiclesFound', 'Không tìm thấy dữ liệu xe phù hợp.')}</p>
                         </div>
                     )}
                 </div>
 
 
                 <div className="p-4 border-t border-gray-100 flex items-center justify-between text-xs text-gray-500 bg-white">
-                    <div className="font-medium">Showing {indexOfFirstItem + 1}-{Math.min(indexOfLastItem, filteredVehicles.length)} out of {filteredVehicles.length} items</div>
+                    <div className="font-medium">{t('pagination.showing', 'Showing')} {indexOfFirstItem + 1}-{Math.min(indexOfLastItem, filteredVehicles.length)} {t('pagination.of', 'out of')} {filteredVehicles.length} {t('pagination.items', 'items')}</div>
 
                     <div className="flex gap-4 items-center">
                         <div className="flex items-center gap-1 border border-gray-200 rounded px-2 py-1.5 cursor-pointer hover:bg-gray-50 transition-colors bg-white font-medium">
@@ -164,7 +166,7 @@ export default function VehicleListPage() {
                         </div>
 
                         <div className="flex items-center gap-2 font-medium">
-                            <span>Go to page</span>
+                            <span>{t('pagination.goTo', 'Go to page')}</span>
                             <input type="text" className="w-10 h-7 border border-gray-200 rounded text-center focus:ring-1 focus:ring-[#284ba5]/50 focus:border-[#284ba5]/50 outline-none" placeholder="#" />
                             <button className="text-gray-400 hover:text-[#284ba5] transition-colors">→</button>
                         </div>

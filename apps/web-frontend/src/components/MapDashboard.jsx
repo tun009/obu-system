@@ -6,6 +6,7 @@ import CarIcon from './ui/CarIcon';
 import Badge from './ui/Badge';
 import ReactDOMServer from 'react-dom/server';
 import { Search, X } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -15,10 +16,10 @@ L.Icon.Default.mergeOptions({
 });
 
 const STATUS_LEGEND = [
-    { key: 'RUNNING',     label: 'Đang chạy', color: '#10b981' },
-    { key: 'STOPPED',     label: 'Dừng xe',    color: '#f59e0b' },
-    { key: 'PARKED',      label: 'Đỗ xe',      color: '#64748b' },
-    { key: 'OFFLINE',     label: 'Mất tín hiệu', color: '#ef4444' },
+    { key: 'RUNNING',     labelKey: 'monitor.statusRunning', color: '#10b981' },
+    { key: 'STOPPED',     labelKey: 'monitor.statusStopped',    color: '#f59e0b' },
+    { key: 'PARKED',      labelKey: 'monitor.statusParked',      color: '#64748b' },
+    { key: 'OFFLINE',     labelKey: 'monitor.statusOffline', color: '#ef4444' },
 ];
 
 const createCustomMarker = (status, direction = 0, label = '') => {
@@ -70,6 +71,7 @@ function LegendCarIcon({ status }) {
 }
 
 export default function MapDashboard({ vehicles, selectedVehicle }) {
+    const { t } = useTranslation();
     const defaultCenter = [21.029754, 105.781992];
     const [searchQuery, setSearchQuery] = useState('');
     const [searchResults, setSearchResults] = useState([]);
@@ -149,7 +151,7 @@ export default function MapDashboard({ vehicles, selectedVehicle }) {
                         <div key={s.key} className="flex items-center gap-1.5">
                             <LegendCarIcon status={s.key} />
                             <span className="text-xs font-medium text-gray-600 whitespace-nowrap">
-                                {s.label}
+                                {t(s.labelKey)}
                                 {statusCounts[s.key] > 0 && (
                                     <span className="ml-1 text-xs font-bold" style={{ color: s.color }}>
                                         ({statusCounts[s.key]})
@@ -166,7 +168,7 @@ export default function MapDashboard({ vehicles, selectedVehicle }) {
                         <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                         <input
                             type="text"
-                            placeholder="Tìm kiếm trên bản đồ..."
+                            placeholder={t('monitor.searchPlaceholder')}
                             value={searchQuery}
                             onChange={handleSearchChange}
                             onFocus={() => searchResults.length > 0 && setShowDropdown(true)}
@@ -197,7 +199,7 @@ export default function MapDashboard({ vehicles, selectedVehicle }) {
 
                     {isSearching && (
                         <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-[9999] p-3 text-center text-sm text-gray-400">
-                            Đang tìm kiếm...
+                            {t('vehicleList.loading', 'Đang tìm kiếm...')}
                         </div>
                     )}
                 </div>

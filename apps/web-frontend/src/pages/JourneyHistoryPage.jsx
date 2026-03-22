@@ -9,16 +9,17 @@ import { FileSpreadsheet, Play, Pause, FastForward, SkipBack, SkipForward, Searc
 import { formatJourneyData } from '../utils/journeyFormatter';
 import ReactDOMServer from 'react-dom/server';
 import CarIcon from '../components/ui/CarIcon';
+import { useTranslation } from 'react-i18next';
 
 const formatDateTimeLocal = (date) => {
     return (new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString()).slice(0, 16);
 };
 
 const STATUS_LEGEND = [
-    { key: 'RUNNING',     label: 'Đang chạy', color: '#10b981' },
-    { key: 'STOPPED',     label: 'Dừng xe',    color: '#f59e0b' },
-    { key: 'PARKED',      label: 'Đỗ xe',      color: '#64748b' },
-    { key: 'OFFLINE',     label: 'Mất tín hiệu', color: '#ef4444' },
+    { key: 'RUNNING',     labelKey: 'monitor.statusRunning', color: '#10b981' },
+    { key: 'STOPPED',     labelKey: 'monitor.statusStopped',    color: '#f59e0b' },
+    { key: 'PARKED',      labelKey: 'monitor.statusParked',      color: '#64748b' },
+    { key: 'OFFLINE',     labelKey: 'monitor.statusOffline', color: '#ef4444' },
 ];
 
 function LegendCarIcon({ status }) {
@@ -36,6 +37,7 @@ function MapSearchFlyTo({ searchCoords }) {
 }
 
 const StaticRoute = React.memo(function StaticRoute({ formattedLogs }) {
+    const { t } = useTranslation();
     const polylinePositions = useMemo(() => {
         return (formattedLogs || [])
             .filter(p => p.lat != null && p.lng != null && !isNaN(p.lat) && !isNaN(p.lng))
@@ -71,9 +73,9 @@ const StaticRoute = React.memo(function StaticRoute({ formattedLogs }) {
             {startLog && (
                 <Marker position={[startLog.lat, startLog.lng]} icon={startIcon} zIndexOffset={800}>
                     <Popup className="obu-popup text-sm font-sans">
-                        <div className="font-bold text-gray-800 mb-1">Điểm xuất phát</div>
+                        <div className="font-bold text-gray-800 mb-1">{t('history.startPoint', 'Điểm xuất phát')}</div>
                         <div className="text-gray-500 text-[11px] leading-tight flex flex-col gap-1">
-                            <span>Thời gian: {startLog.date.toLocaleDateString('en-GB')} {startLog.date.toLocaleTimeString('en-GB')}</span>
+                            <span>{t('history.timeStr', 'Thời gian:')} {startLog.date.toLocaleDateString('en-GB')} {startLog.date.toLocaleTimeString('en-GB')}</span>
                         </div>
                     </Popup>
                 </Marker>
@@ -82,9 +84,9 @@ const StaticRoute = React.memo(function StaticRoute({ formattedLogs }) {
             {endLog && startLog !== endLog && (
                 <Marker position={[endLog.lat, endLog.lng]} icon={endIcon} zIndexOffset={800}>
                     <Popup className="obu-popup text-sm font-sans">
-                        <div className="font-bold text-gray-800 mb-1">Điểm kết thúc</div>
+                        <div className="font-bold text-gray-800 mb-1">{t('history.endPoint', 'Điểm kết thúc')}</div>
                         <div className="text-gray-500 text-[11px] leading-tight flex flex-col gap-1">
-                            <span>Thời gian: {endLog.date.toLocaleDateString('en-GB')} {endLog.date.toLocaleTimeString('en-GB')}</span>
+                            <span>{t('history.timeStr', 'Thời gian:')} {endLog.date.toLocaleDateString('en-GB')} {endLog.date.toLocaleTimeString('en-GB')}</span>
                         </div>
                     </Popup>
                 </Marker>
@@ -118,6 +120,7 @@ function MapPanner({ formattedLogs, zoomToLog }) {
 }
 
 function CarCursor({ zoomToLog }) {
+    const { t } = useTranslation();
     const createCarMarker = (status, direction = 0) => {
         const rawSvg = ReactDOMServer.renderToString(<CarIcon status={status} width={24} height={40} />);
         return L.divIcon({
@@ -140,10 +143,10 @@ function CarCursor({ zoomToLog }) {
             zIndexOffset={1000}
         >
             <Popup className="obu-popup text-sm font-sans" autoPan={false}>
-                <div className="font-bold text-gray-800 mb-1">{zoomToLog.status === 'RUNNING' ? 'Đang chạy' : zoomToLog.status === 'STOPPED' ? 'Dừng xe' : 'Đỗ xe'}</div>
-                <div className="text-gray-600 text-xs mb-0.5">Vận tốc: {Math.round(zoomToLog.speed || 0)} km/h</div>
+                <div className="font-bold text-gray-800 mb-1">{zoomToLog.status === 'RUNNING' ? t('monitor.statusRunning') : zoomToLog.status === 'STOPPED' ? t('monitor.statusStopped') : t('monitor.statusParked')}</div>
+                <div className="text-gray-600 text-xs mb-0.5">{t('history.speed', 'Vận tốc')}: {Math.round(zoomToLog.speed || 0)} {t('common.kmh', 'km/h')}</div>
                 <div className="text-gray-500 text-[11px] leading-tight">
-                    Báo cáo: {zoomToLog.date.toLocaleDateString('en-GB')} {zoomToLog.date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                    {t('history.reportTime', 'Báo cáo:')} {zoomToLog.date.toLocaleDateString('en-GB')} {zoomToLog.date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
                 </div>
             </Popup>
         </Marker>
@@ -162,6 +165,7 @@ function JourneyMap({ formattedLogs, zoomToLog, searchCoords }) {
 }
 
 export default function JourneyHistoryPage() {
+    const { t } = useTranslation();
     const { vehicles, API_BASE_URL } = useVehicles();
 
     // Initial Dates (last 1h)
@@ -233,21 +237,21 @@ export default function JourneyHistoryPage() {
     }, [vehicles, selectedImei]);
 
     const handleSearch = async () => {
-        if (!selectedImei) return alert('Vui lòng chọn 1 xe.');
+        if (!selectedImei) return alert(t('history.selectVehicleError', 'Vui lòng chọn 1 xe.'));
 
         // Validation: Future dates
         const now = new Date();
         if (startDate > now || endDate > now) {
-            return alert('Không được chọn thời gian trong tương lai.');
+            return alert(t('history.futureDateError', 'Không được chọn thời gian trong tương lai.'));
         }
 
         // Validation: Duration max 24 hours to save DB resources
         if (endDate.getTime() - startDate.getTime() > 24 * 60 * 60 * 1000) {
-            return alert('Chỉ được xem nhật trình tối đa 24 giờ trong 1 lần tra cứu.');
+            return alert(t('history.duration24hError', 'Chỉ được xem nhật trình tối đa 24 giờ trong 1 lần tra cứu.'));
         }
 
         if (startDate >= endDate) {
-            return alert('Thời gian bắt đầu phải nhỏ hơn thời gian kết thúc.');
+            return alert(t('history.dateRangeError', 'Thời gian bắt đầu phải nhỏ hơn thời gian kết thúc.'));
         }
 
         setLoading(true);
@@ -355,30 +359,30 @@ export default function JourneyHistoryPage() {
                 <div className="w-[550px] bg-white border-r border-gray-200 flex flex-col shrink-0 shadow-sm z-[5]">
 
                     <div className="px-4 py-4 border-b border-gray-100 flex justify-between items-center shrink-0">
-                        <h1 className="text-xl font-bold tracking-tight text-gray-800">Nhật trình xe</h1>
+                        <h1 className="text-xl font-bold tracking-tight text-gray-800">{t('history.title')}</h1>
                         <Button variant="outline" className="border-green-200 text-green-700 hover:bg-green-50 h-8 px-3 text-sm font-medium">
                             <FileSpreadsheet className="w-4 h-4 mr-1.5" />
-                            Xuất file
+                            {t('vehicleList.export', 'Xuất file')}
                         </Button>
                     </div>
 
                     <div className="p-4 border-b border-gray-100 bg-gray-50/50">
                         <div className="grid grid-cols-2 gap-3 mb-3">
                             <div className="col-span-2">
-                                <label className="block text-xs font-semibold text-gray-600 mb-1">Chọn xe</label>
+                                <label className="block text-xs font-semibold text-gray-600 mb-1">{t('history.selectVehicle')}</label>
                                 <select
                                     className="w-full h-9 rounded-md border border-gray-200 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white"
                                     value={selectedImei}
                                     onChange={(e) => setSelectedImei(e.target.value)}
                                 >
-                                    <option value="" disabled>-- Chọn một xe --</option>
+                                    <option value="" disabled>{t('history.selectPlaceholder', '-- Chọn một xe --')}</option>
                                     {vehicles.map(v => (
                                         <option key={v.imei} value={v.imei}>{v.licensePlate || v.imei}</option>
                                     ))}
                                 </select>
                             </div>
                             <div>
-                                <label className="block text-xs font-semibold text-gray-600 mb-1">Từ ngày</label>
+                                <label className="block text-xs font-semibold text-gray-600 mb-1">{t('history.fromDate')}</label>
                                 <Input
                                     type="datetime-local"
                                     value={formatDateTimeLocal(startDate)}
@@ -387,7 +391,7 @@ export default function JourneyHistoryPage() {
                                 />
                             </div>
                             <div>
-                                <label className="block text-xs font-semibold text-gray-600 mb-1">Đến ngày</label>
+                                <label className="block text-xs font-semibold text-gray-600 mb-1">{t('history.toDate')}</label>
                                 <Input
                                     type="datetime-local"
                                     value={formatDateTimeLocal(endDate)}
@@ -397,32 +401,32 @@ export default function JourneyHistoryPage() {
                             </div>
                         </div>
                         <Button variant="primary" onClick={handleSearch} className="w-full h-9 py-0" disabled={loading}>
-                            {loading ? 'Đang tải...' : 'Tra cứu'}
+                            {loading ? t('common.loading', 'Đang tải...') : t('history.searchButton')}
                         </Button>
                     </div>
 
                     <div className="grid grid-cols-4 gap-2 px-4 py-3 border-b border-gray-100 bg-white">
                         <div className="bg-blue-50/50 rounded-lg p-2 border border-blue-100 flex flex-col justify-center">
-                            <p className="text-[11px] text-gray-500 mb-0.5 font-medium whitespace-nowrap">Thời gian chạy</p>
+                            <p className="text-[11px] text-gray-500 mb-0.5 font-medium whitespace-nowrap">{t('history.runningTime')}</p>
                             <p className="text-lg font-bold text-gray-800 leading-tight">{Math.floor(formattedData.stats.runningMin / 60)}h{formattedData.stats.runningMin % 60}p</p>
                         </div>
                         <div className="bg-blue-50/50 rounded-lg p-2 border border-blue-100 flex flex-col justify-center">
-                            <p className="text-[11px] text-gray-500 mb-0.5 font-medium whitespace-nowrap">Tổng km</p>
+                            <p className="text-[11px] text-gray-500 mb-0.5 font-medium whitespace-nowrap">{t('history.totalKm')}</p>
                             <p className="text-lg font-bold text-gray-800 leading-tight">{formattedData.stats.totalKm}</p>
                         </div>
                         <div className="bg-blue-50/50 rounded-lg p-2 border border-blue-100 flex flex-col justify-center">
-                            <p className="text-[11px] text-gray-500 mb-0.5 font-medium whitespace-nowrap">Dừng/Đỗ</p>
+                            <p className="text-[11px] text-gray-500 mb-0.5 font-medium whitespace-nowrap">{t('history.stopParkTime')}</p>
                             <p className="text-lg font-bold text-gray-800 leading-tight">{Math.floor((formattedData.stats.stoppedMin + formattedData.stats.parkedMin) / 60)}h{(formattedData.stats.stoppedMin + formattedData.stats.parkedMin) % 60}p</p>
                         </div>
                         <div className="bg-blue-50/50 rounded-lg p-2 border border-blue-100 flex flex-col justify-center">
-                            <p className="text-[11px] text-gray-500 mb-0.5 font-medium whitespace-nowrap">Bật máy</p>
+                            <p className="text-[11px] text-gray-500 mb-0.5 font-medium whitespace-nowrap">{t('history.engineOnTime')}</p>
                             <p className="text-lg font-bold text-gray-800 leading-tight">{Math.floor(formattedData.stats.engineOnMin / 60)}h{formattedData.stats.engineOnMin % 60}p</p>
                         </div>
                     </div>
 
                     <div className="flex-1 overflow-y-auto w-full max-h-[calc(100vh-421px)]">
                         {filteredLogs.length === 0 ? (
-                            <div className="p-8 text-center text-gray-400 text-sm">Chưa có dữ liệu. Hãy chọn khoảng thời gian và nhấn tra cứu.</div>
+                            <div className="p-8 text-center text-gray-400 text-sm">{t('history.noDataMessage')}</div>
                         ) : (
                             <div className="pl-6 pr-4 py-4 w-full">
                                 {visibleLogs.map((log, idx) => (
@@ -447,16 +451,16 @@ export default function JourneyHistoryPage() {
                                             </div>
                                             <div className="flex-1 min-w-0">
                                                 <div className="font-semibold text-gray-800 text-sm mb-1 leading-tight flex items-center justify-between">
-                                                    <span>{log.status === 'RUNNING' ? 'Đang chạy' : log.status === 'STOPPED' ? 'Dừng xe' : 'Đỗ xe'}</span>
+                                                    <span>{log.status === 'RUNNING' ? t('monitor.statusRunning') : log.status === 'STOPPED' ? t('monitor.statusStopped') : t('monitor.statusParked')}</span>
                                                     <span className="text-xs font-mono text-gray-500 bg-gray-100 px-1 rounded">
-                                                        {log.validLocation && log.lat != null && log.lng != null ? `${log.lat.toFixed(5)}, ${log.lng.toFixed(5)}` : 'Mất GPS'}
+                                                        {log.validLocation && log.lat != null && log.lng != null ? `${log.lat.toFixed(5)}, ${log.lng.toFixed(5)}` : t('common.lostGps', 'Mất GPS')}
                                                     </span>
                                                 </div>
                                                 <div className="text-xs text-gray-500 truncate leading-snug flex items-center gap-3">
                                                     <span>RPM: {log.rpm}</span>
                                                     <span>Temp: {log.coolantTemp || 0}°C</span>
                                                     <span>Throttle: {log.throttle || 0}%</span>
-                                                    <span>Speed: {Math.round(log.speed || 0)} km/h</span>
+                                                    <span>Speed: {Math.round(log.speed || 0)} {t('common.kmh', 'km/h')}</span>
                                                 </div>
                                             </div>
                                             {/* <div className="text-right shrink-0">
@@ -471,7 +475,7 @@ export default function JourneyHistoryPage() {
 
                                 {visibleCount < filteredLogs.length && (
                                     <div ref={sentinelRef} className="h-8 flex items-center justify-center">
-                                        <span className="text-xs text-gray-400">Đang tải thêm...</span>
+                                        <span className="text-xs text-gray-400">{t('common.loadingMore', 'Đang tải thêm...')}</span>
                                     </div>
                                 )}
                             </div>
@@ -485,7 +489,7 @@ export default function JourneyHistoryPage() {
                             {STATUS_LEGEND.map(s => (
                                 <div key={s.key} className="flex items-center gap-1.5">
                                     <LegendCarIcon status={s.key} />
-                                    <span className="text-xs font-medium text-gray-600 whitespace-nowrap">{s.label}</span>
+                                    <span className="text-xs font-medium text-gray-600 whitespace-nowrap">{t(s.labelKey)}</span>
                                 </div>
                             ))}
                         </div>
@@ -495,7 +499,7 @@ export default function JourneyHistoryPage() {
                                 <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                                 <input
                                     type="text"
-                                    placeholder="Tìm kiếm trên bản đồ..."
+                                    placeholder={t('monitor.searchPlaceholder')}
                                     value={mapSearchQuery}
                                     onChange={handleMapSearchChange}
                                     onFocus={() => mapSearchResults.length > 0 && setShowMapDropdown(true)}
@@ -525,7 +529,7 @@ export default function JourneyHistoryPage() {
 
                             {isMapSearching && (
                                 <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-[9999] p-3 text-center text-sm text-gray-400">
-                                    Đang tìm kiếm...
+                                    {t('vehicleList.loading', 'Đang tìm kiếm...')}
                                 </div>
                             )}
                         </div>
