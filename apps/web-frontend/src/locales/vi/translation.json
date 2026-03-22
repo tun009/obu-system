@@ -9,9 +9,9 @@
     "title": "OBU Fleet Tracker",
     "subtitle": "Đăng nhập để vào hệ thống giám sát",
     "username": "Tài khoản",
-    "usernameDesc": "Nhập admin",
+    "usernameDesc": "Nhập tài khoản",
     "password": "Mật khẩu",
-    "passwordDesc": "Nhập admin",
+    "passwordDesc": "Nhập mật khẩu",
     "submit": "Đăng nhập",
     "errorEmpty": "Vui lòng nhập tài khoản và mật khẩu.",
     "errorInvalid": "Tài khoản hoặc mật khẩu không chính xác."

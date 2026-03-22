@@ -9,9 +9,9 @@
     "title": "OBU Fleet Tracker",
     "subtitle": "Sign in to access the system",
     "username": "Username",
-    "usernameDesc": "Enter admin",
+    "usernameDesc": "Enter username",
     "password": "Password",
-    "passwordDesc": "Enter admin",
+    "passwordDesc": "Enter password",
     "submit": "Sign in",
     "errorEmpty": "Please enter both username and password.",
     "errorInvalid": "Invalid username or password."
