@@ -111,7 +111,7 @@ export default function VehicleListPage() {
                             <div className="text-gray-500">{v.type || ''}</div>
                             <div className="text-gray-500 font-mono text-xs bg-gray-50 border border-gray-100 px-2 py-1 rounded inline-flex w-fit">{v.imei}</div>
                             <div className="flex justify-center">
-                                <Badge status={v.status} className="w-28 justify-center shadow-sm" />
+                                <Badge status={v.status} className="justify-center shadow-sm" />
                             </div>
                             <div className="flex justify-center gap-3 text-gray-400">
                                 <button onClick={() => handleEdit(v)} className="hover:text-blue-600 transition-colors p-1" title={t('vehicleList.edit')}><Edit className="w-4 h-4" /></button>
