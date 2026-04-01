@@ -159,11 +159,15 @@ router.post('/', async (req, res) => {
 
 router.put('/:imei', async (req, res) => {
     const { imei } = req.params;
-    const { licensePlate, type } = req.body;
+    const { imei: newImei, licensePlate, type } = req.body;
     try {
+        const updateData = { licensePlate, type };
+        if (newImei && newImei !== imei) {
+            updateData.imei = newImei;
+        }
         const vehicle = await prisma.vehicle.update({
             where: { imei },
-            data: { licensePlate, type }
+            data: updateData
         });
         res.json({ success: true, data: vehicle });
     } catch (error) {

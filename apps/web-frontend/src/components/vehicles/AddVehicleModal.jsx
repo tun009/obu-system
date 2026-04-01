@@ -7,7 +7,7 @@ import { useTranslation } from 'react-i18next';
 
 export default function AddVehicleModal({ onClose, editingVehicle }) {
     const { t } = useTranslation();
-    const { setVehicles, API_BASE_URL } = useVehicles();
+    const { fetchVehicles, API_BASE_URL } = useVehicles();
     const isEditMode = !!editingVehicle;
 
     const [plate, setPlate] = useState(editingVehicle?.licensePlate || '');
@@ -39,17 +39,12 @@ export default function AddVehicleModal({ onClose, editingVehicle }) {
     const handleSubmit = async () => {
         try {
             if (isEditMode) {
-                await axios.put(`${API_BASE_URL}/vehicles/${editingVehicle.imei}`, { licensePlate: plate, type });
-                setVehicles(prev => prev.map(v => v.imei === editingVehicle.imei ? { ...v, licensePlate: plate, type } : v));
+                await axios.put(`${API_BASE_URL}/vehicles/${editingVehicle.imei}`, { imei, licensePlate: plate, type });
             } else {
-                const res = await axios.post(`${API_BASE_URL}/vehicles`, { imei, licensePlate: plate, type });
-                // If the vehicle doesn't exist yet in the Websocket array, append it manually as OFFLINE
-                setVehicles(prev => {
-                    const existing = prev.find(v => v.imei === imei);
-                    if (existing) return prev;
-                    return [{ imei, licensePlate: plate, type, status: 'OFFLINE', speed: 0, rpm: 0, fuel: 0, coolantTemp: 0 }, ...prev];
-                });
+                await axios.post(`${API_BASE_URL}/vehicles`, { imei, licensePlate: plate, type });
             }
+            // Re-fetch fresh data from server to ensure UI is in sync
+            await fetchVehicles();
             onClose();
         } catch (e) {
             alert(t('common.error', 'Có lỗi xảy ra: ') + e.message);

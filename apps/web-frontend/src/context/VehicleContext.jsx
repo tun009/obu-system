@@ -12,18 +12,19 @@ export function VehicleProvider({ children }) {
     const [isConnected, setIsConnected] = useState(false);
 
     useEffect(() => {
-        const fetchVehicles = async () => {
-            try {
-                const response = await axios.get(`${API_BASE_URL}/vehicles`);
-                if (response.data.success) {
-                    setVehicles(response.data.data);
-                }
-            } catch (error) {
-                console.error("Failed to load initial vehicles", error);
-            }
-        };
         fetchVehicles();
     }, []);
+
+    const fetchVehicles = async () => {
+        try {
+            const response = await axios.get(`${API_BASE_URL}/vehicles`);
+            if (response.data.success) {
+                setVehicles(response.data.data);
+            }
+        } catch (error) {
+            console.error("Failed to load initial vehicles", error);
+        }
+    };
 
     useEffect(() => {
         const socket = io(SOCKET_URL, {
@@ -78,7 +79,7 @@ export function VehicleProvider({ children }) {
     }, []);
 
     return (
-        <VehicleContext.Provider value={{ vehicles, setVehicles, API_BASE_URL, isConnected }}>
+        <VehicleContext.Provider value={{ vehicles, setVehicles, fetchVehicles, API_BASE_URL, isConnected }}>
             {children}
         </VehicleContext.Provider>
     );
